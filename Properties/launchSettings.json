@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Macrome": {
+      "commandName": "Project",
+      "commandLineArgs": "--decoy-document decoy_document.xls --payload default_macro_template.xls"
+    }
+  }
+}

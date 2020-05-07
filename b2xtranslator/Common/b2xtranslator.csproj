@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <Version>2.0.0</Version>
+    <RepositoryUrl>https://github.com/EvolutionJobs/b2xtranslator-core</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageProjectUrl>https://github.com/EvolutionJobs/b2xtranslator-core</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/EvolutionJobs/b2xtranslator-core/blob/master/LICENSE</PackageLicenseUrl>
+    <Copyright>2017, Evolution Recruitment Solutions and 2008-2009, DIaLOGIKa</Copyright>
+    <Company>Evolution Recruitment Solutions</Company>
+    <Authors>Evolution Recruitment Solutions and DIaLOGIKa</Authors>
+    <Description>Convert binary legacy Microsoft Office formats to OpenXML</Description>
+  </PropertyGroup>
+</Project>

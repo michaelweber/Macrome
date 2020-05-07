@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Macrome</AssemblyName>
+    <RootNamespace>Macrome</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="b2xtranslator\**" />
+    <Compile Remove="packages\**" />
+    <Compile Remove="UnitTests\**" />
+    <EmbeddedResource Remove="b2xtranslator\**" />
+    <EmbeddedResource Remove="packages\**" />
+    <EmbeddedResource Remove="UnitTests\**" />
+    <None Remove="b2xtranslator\**" />
+    <None Remove="packages\**" />
+    <None Remove="UnitTests\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="b2xtranslator\Common\b2xtranslator.csproj" />
+    <ProjectReference Include="b2xtranslator\Xls\b2xtranslator.xls.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenMcdf" Version="2.2.1.4" />
+    <PackageReference Include="OpenMcdf.Extensions" Version="2.2.1.4" />
+    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20253.1" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="decoy_document.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="default_macro_template.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
