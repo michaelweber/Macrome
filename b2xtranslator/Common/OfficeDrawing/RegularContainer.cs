@@ -42,19 +42,6 @@ namespace b2xtranslator.OfficeDrawing
                 }
                 catch (Exception e)
                 {
-                    if (WRITE_DEBUG_DUMPS)
-                    {
-                        if (child != null)
-                        {
-                            string filename = string.Format(@"{0}\{1}.record", "dumps", child.GetIdentifier());
-
-                            using (var fs = new FileStream(filename, FileMode.Create))
-                            {
-                                child.DumpToStream(fs);
-                            }
-                        }
-                    }
-
                     throw e;
                 }
             }

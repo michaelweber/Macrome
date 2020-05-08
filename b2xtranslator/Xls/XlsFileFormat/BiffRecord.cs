@@ -267,5 +267,10 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
 
             return false;
         }
+
+        public override int GetHashCode()
+        {
+            return GetBytes().GetHashCode();
+        }
     }
 }

@@ -146,7 +146,7 @@ namespace Macrome
 
         public WorkbookStream AddLabel(string label, int rw, int col)
         {
-            /**
+            /*
              * Labels require a reference to an XTI index which is used to say which
              * BoundSheet8 record maps to the appropriate tab. In order to make this
              * record we need a SupBook record, and ExternSheet record to specify

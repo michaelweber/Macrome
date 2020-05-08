@@ -57,6 +57,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
             this.fHighByte = Utils.BitmaskToBool(this.grbit, 0x0001);
             this.fExtSt = Utils.BitmaskToBool(this.grbit, 0x0004);
             this.fRichSt = Utils.BitmaskToBool(this.grbit, 0x0008);
+
+            this.rgb = new byte[0];
         }
     }
 }
