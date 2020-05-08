@@ -57,8 +57,8 @@ Big thanks to all the shoulders that I was able to stand on in order to write th
 
 * https://outflank.nl/blog/2018/10/06/old-school-evil-excel-4-0-macros-xlm/ - The Outflank team created this attack, I'm just automating some of the tedious parts.
 * The folks at InQuest for their excellent write-ups on what malware authors are doing to evade detection right now.
-** https://inquest.net/blog/2019/01/29/Carving-Sneaky-XLM-Files
-** https://inquest.net/blog/2020/03/18/Getting-Sneakier-Hidden-Sheets-Data-Connections-and-XLM-Macros
-** https://inquest.net/blog/2020/05/06/ZLoader-4.0-Macrosheets-
-* @DissectMalware for their killer XLMMacroDeobfuscator tool which has been awesome to test against and is just a really great piece of tech if you're on the defense/analyst side. Check it out at https://github.com/DissectMalware/XLMMacroDeobfuscator. They also write 
+  * https://inquest.net/blog/2019/01/29/Carving-Sneaky-XLM-Files
+  * https://inquest.net/blog/2020/03/18/Getting-Sneakier-Hidden-Sheets-Data-Connections-and-XLM-Macros
+  * https://inquest.net/blog/2020/05/06/ZLoader-4.0-Macrosheets-
+* [@DissectMalware](https://twitter.com/DissectMalware/) for their killer [XLMMacroDeobfuscator](https://github.com/DissectMalware/XLMMacroDeobfuscator) tool which has been awesome to test against and is just a really great piece of tech if you're on the defense/analyst side.
 * The original authors of the `b2xtranslator` library as well as the folks at EvolutionJobs who updated it and ported it to dotnet. The code used here was initially sourced from https://github.com/EvolutionJobs/b2xtranslator.
