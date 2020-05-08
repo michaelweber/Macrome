@@ -1,6 +1,8 @@
 # Macrome
 An Excel Macro Document Reader/Writer for Red Teamers & Analysts.
 
+![](Docs/macrome.png.png)
+
 # Installation / Building
 Clone or download this repository, the tool can then be executed using dotnet - for example:
 
