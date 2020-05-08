@@ -3,10 +3,11 @@ using System.Collections.Generic;
 
 namespace Macrome
 {
-    public static class MacroTemplates
+    public static class MacroPatterns
     {
-        public static List<String> GetBinaryLoaderMacro(string macroSheetName)
+        public static List<String> GetBinaryLoaderPattern(string macroSheetName)
         {
+            //TODO Autocalculate these values at generation time
             //These variables assume certain positions in generated macros
             //Col 1 is our obfuscated payload
             //Col 2 is our actual macro set defined below

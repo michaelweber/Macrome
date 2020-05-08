@@ -24,8 +24,17 @@ namespace Macrome
             }
         }
 
+        /// <summary>
+        /// Generate an XLS 
+        /// </summary>
+        /// <param name="decoyDocument"></param>
+        /// <param name="payload"></param>
+        /// <param name="payloadType"></param>
+        /// <param name="macroSheetName"></param>
+        /// <param name="outputSheetName"></param>
+        /// <param name="args"></param>
         public static void Main(FileInfo decoyDocument = null, FileInfo payload = null, PayloadType payloadType = PayloadType.Shellcode, 
-                                string macroSheetName = "Sheet2", string outputSheetName = "weaponized_doc.xls", string[] args = null)
+                                string macroSheetName = "Sheet2", string outputSheetName = "output.xls", string[] args = null)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
@@ -46,7 +55,7 @@ namespace Macrome
             switch (payloadType)
             {
                 case PayloadType.Shellcode:
-                    macros = MacroTemplates.GetBinaryLoaderMacro(macroSheetName);
+                    macros = MacroPatterns.GetBinaryLoaderPattern(macroSheetName);
                     binaryPayload = File.ReadAllBytes(payload.FullName);
                     break;
                 case PayloadType.Macro:
