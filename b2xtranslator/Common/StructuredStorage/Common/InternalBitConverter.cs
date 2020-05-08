@@ -61,7 +61,10 @@ namespace b2xtranslator.StructuredStorage.Common
             string result = enc.GetString(value);
             if (result.Contains("\0"))
             {
-                result = result.Remove(result.IndexOf("\0"));
+                //In linux "\u0005DocumentSummary\0\0\0\0".IndexOf("\0") will evaluate to 1, not 16 like in windows
+                // result = result.Remove(result.IndexOf("\0"));
+                //But this works fine
+                result = result.TrimEnd('\0');
             }
             return result;
         }

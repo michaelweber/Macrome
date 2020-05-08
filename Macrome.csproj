@@ -33,11 +33,17 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="decoy_document.xls">
+    <ContentWithTargetPath  Include="Docs\decoy_document.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="default_macro_template.xls">
+      <TargetPath>decoy_document.xls</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath  Include="Docs\default_macro_template.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+      <TargetPath>default_macro_template.xls</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath  Include="Docs\popcalc.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>popcalc.bin</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
 </Project>
