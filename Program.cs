@@ -32,10 +32,10 @@ namespace Macrome
         /// </summary>
         /// <param name="decoyDocument">File path to the base Excel 2003 sheet that should be visible to users.</param>
         /// <param name="payload">Either binary shellcode or a newline separated list of Excel Macros to execute</param>
-        /// <param name="payloadType">Specify if the payload is binary shellcode or a macro list</param>
-        /// <param name="macroSheetName">The name that should be used for the macro sheet. Default is Sheet2</param>
-        /// <param name="outputSheetName">The output filename used for the generated document. Default is output.xls</param>
-        /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach.</param>
+        /// <param name="payloadType">Specify if the payload is binary shellcode or a macro list. Defaults to Shellcode</param>
+        /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
+        /// <param name="outputSheetName">The output filename used for the generated document. Defaults to output.xls</param>
+        /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
         public static void Main(FileInfo decoyDocument = null, FileInfo payload = null, PayloadType payloadType = PayloadType.Shellcode, 
                                 string macroSheetName = "Sheet2", string outputSheetName = "output.xls", bool debugMode = false)
         {
