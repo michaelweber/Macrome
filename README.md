@@ -64,3 +64,4 @@ Big thanks to all the shoulders that I was able to stand on in order to write th
   * https://inquest.net/blog/2020/05/06/ZLoader-4.0-Macrosheets-
 * [@DissectMalware](https://twitter.com/DissectMalware/) for their killer [XLMMacroDeobfuscator](https://github.com/DissectMalware/XLMMacroDeobfuscator) tool which has been awesome to test against and is just a really great piece of tech if you're on the defense/analyst side.
 * The original authors of the `b2xtranslator` library as well as the folks at EvolutionJobs who updated it and ported it to dotnet. The code used here was initially sourced from https://github.com/EvolutionJobs/b2xtranslator.
+* Imagery taken from KC Green's comic at https://gunshowcomic.com/648
