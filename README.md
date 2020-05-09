@@ -7,7 +7,7 @@ An Excel Macro Document Reader/Writer for Red Teamers & Analysts.
 Clone or download this repository, the tool can then be executed using dotnet - for example:
 
 ~~~
-dotnet run -- --decoy-document Docs\decoy_document.xls --payload Docs\popcalc.bin
+dotnet run -- build --decoy-document Docs\decoy_document.xls --payload Docs\popcalc.bin
 ~~~
 
 or 
@@ -15,30 +15,18 @@ or
 ~~~
 dotnet build
 cd bin/Debug/netcoreapp2.0
-dotnet Macrome.dll --decoy-document decoy_document.xls --payload popcalc.bin
+dotnet Macrome.dll deobfuscate --path obfuscated_document.xls
 ~~~
 
 # Usage
-Run Macrome by either using `dotnet run` from the solution directory, or `dotnet` against the built Macrome binary. 
-~~~
-Macrome:
-  Generate an Excel Document with a hidden macro sheet that will execute code described by the payload argument.
+Run Macrome by either using `dotnet run` from the solution directory, or `dotnet` against the built Macrome binary. There are two modes of operation for Macrome - Build mode and Deobfuscation mode. 
 
-Usage:
-  Macrome [options]
+## Build Mode
+Run Macrome with the `build` command in order to generate an Excel document containing an obfuscated macro sheet using a provided decoy document and macro payload. `dotnet Macrome.dll build -h` will display full usage instructions.
 
-Options:
-  --decoy-document <decoy-document>          File path to the base Excel 2003 sheet that should be visible to users.
-  --payload <payload>                        Either binary shellcode or a newline separated list of Excel Macros to execute
-  --payload-type <Macro|Shellcode>           Specify if the payload is binary shellcode or a macro list. Defaults to Shellcode
-  --macro-sheet-name <macro-sheet-name>      The name that should be used for the macro sheet. Defaults to Sheet2
-  --output-sheet-name <output-sheet-name>    The output filename used for the generated document. Defaults to output.xls
-  --debug-mode                               Set this to true to make the program wait for a debugger to attach. Defaults to false
-  --version                                  Show version information
-  -?, -h, --help                             Show help and usage information
-~~~
+For example, to build a document using decoy document `path/to/decoy_document.xls` and binary x86 shellcode stored at `path/to/shellcode.bin`, run `dotnet Macrome.dll build --decoy-document path/to/decoy_document.xls --payload /path/to/shellcode.bin`. This will generate an XLS 2003 document which after being opened and having the "Enable Content" button pressed, will execute the shellcode of `shellcode.bin`.
 
-## Binary Payload Usage
+### Binary Payload Usage
 First generate a base "decoy" Excel document that will contain content users should see. This should be some sort of lure that convinces users to click the "Enable Macros" button displayed in Excel. There's some examples of the "latest and greatest" lure creation at https://inquest.net/blog/2020/05/06/ZLoader-4.0-Macrosheets-. Once this sheet is created, save the document as type `Excel 97-2003 Workbook (*.xls)` rather than the newer `Excel Workbook (*.xlsx)` format. An example decoy document is included in `/Docs/decoy_document.xls`.
 
 Next, generate a shellcode payload to provide to the tool. The example binary payload (which pops calc) was generated using `msfvenom` using the following parameters:
@@ -51,8 +39,16 @@ Note that using a majority alpha-numeric payload will reduce the size of the mac
 
 Currently this will only work with `x86` payloads, but `x64` support is coming soon, along with support for loading .NET binaries.
 
-## Macro Payload Usage
+### Macro Payload Usage
 Technically possible, but there's more work to do on this both implementation and documentation side.
+
+## Deobfuscate Mode
+Run Macrome with the `deobfuscate` command to take an obfuscated XLS Binary document and attempt to reverse several anti-analysis behaviors. `dotnet Macrome.dll deobfuscate -h` will display full usage instructions. Currently, by default this mode will:
+
+* Unhide all sheets regardless of their hidden status
+* Normalize the manually specified labels for all `Lbl` entries which Excel will interpret as Auto_Open entries despite their name not matching that string.
+
+For example, to deobfuscate a malicious XLS 2003 macro file at `path/to/obfuscated_file.xls`, run `dotnet Macrome.dll deobfuscate --path path/to/obfuscated_file.xls`. This will generate a copy of the obfuscated file which will be easier to analyze manually or with tools.
 
 # Acknowledgements 
 Big thanks to all the shoulders that I was able to stand on in order to write this.
