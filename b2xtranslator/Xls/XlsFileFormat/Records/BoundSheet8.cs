@@ -41,13 +41,12 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             /// </summary>
             SuperHidden = 0x5,
 
-
             /// <summary>
             /// We can flip the bits beyond the initial reserved 2 bits and maintain hidden sheet status
             /// There's several AV vendors which will flag ALL cases where the very hidden bit is flipped
             /// so don't use this if your target uses those vendors (Ad-Aware, ALYac, Arcabit, BitDefender, Emsisoft, eScan, GData, MAX)
             /// </summary>
-            SuperExtraVeryHidden = 0x6,
+            SuperVeryHidden = 0x6,
         }
 
         public enum SheetType : ushort

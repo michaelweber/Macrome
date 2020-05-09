@@ -4,6 +4,11 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>Macrome</AssemblyName>
     <RootNamespace>Macrome</RootNamespace>
+    <Version>0.1.1</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>Build an obfuscated XLS Macro Document or Deobfuscate an existing malicious XLS Macro Document</Description>
+    <Copyright>© 2020 Michael Weber</Copyright>
+    <RepositoryUrl>https://github.com/michaelweber/Macrome</RepositoryUrl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591</NoWarn>
@@ -29,19 +34,19 @@
   <ItemGroup>
     <PackageReference Include="OpenMcdf" Version="2.2.1.4" />
     <PackageReference Include="OpenMcdf.Extensions" Version="2.2.1.4" />
-    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.3.0-alpha.20253.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20253.1" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>
-    <ContentWithTargetPath  Include="Docs\decoy_document.xls">
+    <ContentWithTargetPath Include="Docs\decoy_document.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>decoy_document.xls</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath  Include="Docs\default_macro_template.xls">
+    <ContentWithTargetPath Include="Docs\default_macro_template.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>default_macro_template.xls</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath  Include="Docs\popcalc.bin">
+    <ContentWithTargetPath Include="Docs\popcalc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>popcalc.bin</TargetPath>
     </ContentWithTargetPath>

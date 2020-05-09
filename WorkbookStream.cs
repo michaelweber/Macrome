@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Structures;
+using b2xtranslator.StructuredStorage.Reader;
 
 namespace Macrome
 {
@@ -14,6 +16,18 @@ namespace Macrome
         public List<BiffRecord> Records
         {
             get { return _biffRecords; }
+        }
+
+        public WorkbookStream(string filePath)
+        {
+            using (var fs = new FileStream(filePath, FileMode.Open))
+            {
+                StructuredStorageReader ssr = new StructuredStorageReader(fs);
+                var wbStream = ssr.GetStream("Workbook");
+                byte[] wbBytes = new byte[wbStream.Length];
+                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                _biffRecords = RecordHelper.ParseBiffStreamBytes(wbBytes);
+            }
         }
 
         public WorkbookStream(List<BiffRecord> records)
@@ -205,6 +219,31 @@ namespace Macrome
         public List<BiffRecord> GetAllRecordsByType(RecordType type)
         {
             return _biffRecords.Where(r => r.Id == type).Select(r => (BiffRecord)r.Clone()).ToList();
+        }
+
+        public List<Lbl> GetAutoOpenLabels()
+        {
+            List<Lbl> labels = GetAllRecordsByType<Lbl>();
+            List<Lbl> autoOpenLabels = new List<Lbl>();
+            foreach (var label in labels)
+            {
+                string normalizedName;
+                if (label.Name.fHighByte)
+                {
+                    normalizedName = label.Name.Value.Replace("\u0000", "");
+                }
+                else
+                {
+                    normalizedName = label.Name.Value.Replace("\0", "");
+                }
+                
+                if (normalizedName.ToLowerInvariant().StartsWith("auto_open"))
+                {
+                    autoOpenLabels.Add(label);
+                }
+            }
+
+            return autoOpenLabels;
         }
 
         /// <summary>

