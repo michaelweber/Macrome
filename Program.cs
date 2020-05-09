@@ -34,7 +34,7 @@ namespace Macrome
         /// Deobfuscate a legacy XLS document to enable simpler analysis.
         /// </summary>
         /// <param name="path">Path to the XLS file to deobfuscate</param>
-        /// <param name="neuterFile">Flag to insert a HALT() expression into all Auto_Open start locations</param>
+        /// <param name="neuterFile">Flag to insert a HALT() expression into all Auto_Open start locations. NOT IMPLEMENTED</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to deobfuscated.xls</param>
         public static void Deobfuscate(FileInfo path, bool neuterFile = false, string outputFileName = "deobfuscated.xls")
         {
@@ -48,6 +48,11 @@ namespace Macrome
             {
                 Console.WriteLine("path file does not exist.");
                 return;
+            }
+
+            if (neuterFile)
+            {
+                throw new NotImplementedException("XLS Neutering Not Implemented Yet");
             }
 
             WorkbookStream wbs = new WorkbookStream(path.FullName);
@@ -98,7 +103,6 @@ namespace Macrome
             WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
             WorkbookEditor wbe = new WorkbookEditor(wbs);
 
-            // wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.Visible);
             wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.SuperHidden);
 
             wbe.AddLabel("Auto_Open", 0, 0);
