@@ -48,5 +48,10 @@ namespace Macrome
 
             return macros;
         }
+
+        public static List<String> GetBinaryLoader64bitPattern(string macroSheetName)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -66,10 +66,25 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             /// </summary>
             Chartsheet = 0x0002,
 
+            Undefined3 = 0x0003,
+            Undefined4 = 0x0004,
+            Undefined5 = 0x0005,
+
+
             /// <summary>
             /// Visual Basic module
             /// </summary>
-            VisualBasicModule = 0x0006
+            VisualBasicModule = 0x0006,
+
+            Undefined7 = 0x0007,
+            Undefined8 = 0x0008,
+            Undefined9 = 0x0009,
+
+
+            /// <summary>
+            /// Excel 4.0 macro sheet
+            /// </summary>
+            MacrosheetExtra = 0x0081,
         } 
 
 

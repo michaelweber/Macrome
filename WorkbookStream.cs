@@ -255,6 +255,8 @@ namespace Macrome
         /// 2) The string we use for the Lbl can be Unicode, which will further break signatures expecting an ASCII Auto_Open string
         /// 3) We can inject null bytes into the label name and Excel will ignore them when hunting for Auto_Open labels.
         ///    The name manager will only display up to the first null byte - and most excel label parsers will also break on this.
+        /// 4) The Unicode BOM character (0xFEFF) is also disregarded by Excel. We can use this to break detections that will drop
+        ///    nulls and look for Auto_Open without being case sensitive. By injecting this with nulls we break most detection.
         /// </summary>
         /// <returns></returns>
         public WorkbookStream ObfuscateAutoOpen()
@@ -263,7 +265,7 @@ namespace Macrome
             Lbl autoOpenLbl = labels.First(l => l.fBuiltin && l.Name.Value.Equals("\u0001") ||
                                                 l.Name.Value.ToLower().StartsWith("auto_open"));
             Lbl replaceLabelStringLbl = ((BiffRecord)autoOpenLbl.Clone()).AsRecordType<Lbl>();
-            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("Au\u0000To_OpEn\u0000\u0000\u0000\u0000\u0000", true));
+            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000A\uFEFFu\uFEFFt\uFEFFo_Open\u0000\u0000\uFEFF\u0000\u0000", true));
             replaceLabelStringLbl.fBuiltin = false;
 
             WorkbookStream obfuscatedStream = ReplaceRecord(autoOpenLbl, replaceLabelStringLbl);

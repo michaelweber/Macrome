@@ -108,8 +108,13 @@ namespace Macrome
         {
             //TODO [Stealth] Go back to using PtgFunc instead of PtgFuncVar to avoid easy signature
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+
+            Random r = new Random();
+
             ptgStack.Push(new PtgInt(charInt));
             ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgRef(r.Next(1000,2000), r.Next(0x10,0x100),false,false,AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgConcat());
             return ptgStack;
         }
 
