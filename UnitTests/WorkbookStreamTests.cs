@@ -127,6 +127,18 @@ namespace UnitTests
         }
 
         [Test]
+        public void TestDeobfuscation()
+        {
+            byte[] wbBytes = TestHelpers.GetMacroTestBytes();
+            WorkbookStream wbs = new WorkbookStream(wbBytes);
+
+            wbs = wbs.ObfuscateAutoOpen();
+
+            List<Lbl> labels = wbs.GetAutoOpenLabels();
+            Assert.AreEqual(1, labels.Count);
+        }
+
+        [Test]
         public void TestAddMacroSheet()
         {
             byte[] wbBytes = TestHelpers.GetTemplateMacroBytes();
@@ -151,18 +163,9 @@ namespace UnitTests
         public void TestChangeLabel()
         {
             WorkbookStream macroWorkbookStream = new WorkbookStream(TestHelpers.GetMacroTestBytes());
-            // macroWorkbookStream = new WorkbookStream(TestHelpers.GetMalwareTestBytes());
-
-
-            // List<SupBook> supBooks = macroWorkbookStream.GetAllRecordsByType<SupBook>();
             List<Lbl> labels = macroWorkbookStream.GetAllRecordsByType<Lbl>();
-            // List<ExternSheet> externSheets = macroWorkbookStream.GetAllRecordsByType<ExternSheet>();
-            // List<Formula> formulas = macroWorkbookStream.GetAllRecordsByType<Formula>();
 
             Lbl autoOpenLbl = labels.First(l => l.fBuiltin && l.Name.Value.Equals("\u0001"));
-
-            
-            // Lbl labelStringLbl = labels.First(l => (uint)l.cch > 2);
 
             Lbl replaceLabelStringLbl = ((BiffRecord)autoOpenLbl.Clone()).AsRecordType<Lbl>();
             replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("Auto_Open", true));
@@ -173,22 +176,10 @@ namespace UnitTests
             var rLabelBytes = replaceLabelStringLbl.GetBytes();
             Assert.AreEqual(rLabelBytes, cBytes);
             macroWorkbookStream = macroWorkbookStream.ReplaceRecord(autoOpenLbl, replaceLabelStringLbl);
-            // macroWorkbookStream = macroWorkbookStream.InsertRecord(replaceLabelStringLbl, autoOpenLbl);
-
-            // BoundSheet8 oldSheetRecord = macroWorkbookStream.GetAllRecordsByType<BoundSheet8>().First();
-            // BoundSheet8 nonMacroSheet = ((BiffRecord)oldSheetRecord.Clone()).AsRecordType<BoundSheet8>();
-            // nonMacroSheet.dt = BoundSheet8.SheetType.Macrosheet;
-            // nonMacroSheet.stName = new ShortXLUnicodeString("Renamed Sheet");
-
-            // macroWorkbookStream = macroWorkbookStream.ReplaceRecord(oldSheetRecord, nonMacroSheet);
-
-
-
             macroWorkbookStream = macroWorkbookStream.FixBoundSheetOffsets();
 
             ExcelDocWriter writer = new ExcelDocWriter();
             writer.WriteDocument(TestHelpers.AssemblyDirectory + Path.DirectorySeparatorChar + "changedLabel.xls", macroWorkbookStream.ToBytes());
-            // writer.WriteDocument(TestHelpers.AssemblyDirectory + Path.DirectorySeparatorChar + "changedLabel.xls.donotrun", macroWorkbookStream.ToBytes());
         }
 
 
@@ -236,11 +227,10 @@ namespace UnitTests
             WorkbookStream modifiedStream = wbs.InsertRecords(formulasToAdd, haltFormula);
             modifiedStream = modifiedStream.ReplaceRecord(haltFormula, gotoFormula);
 
-            // modifiedStream = modifiedStream.ObfuscateAutoOpen();
+            modifiedStream = modifiedStream.ObfuscateAutoOpen();
 
             ExcelDocWriter writer = new ExcelDocWriter();
             writer.WriteDocument(TestHelpers.AssemblyDirectory + Path.DirectorySeparatorChar + "not-equals-parser-bug.xls", modifiedStream);
-
         }
     }
 }

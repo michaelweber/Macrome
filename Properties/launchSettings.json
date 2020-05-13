@@ -2,7 +2,7 @@
   "profiles": {
     "Macrome": {
       "commandName": "Project",
-      "commandLineArgs": "build -h"
+      "commandLineArgs": "build --decoy-document decoy_document.xls --payload popcalc.bin"
     }
   }
 }

@@ -70,6 +70,20 @@ namespace UnitTests
         }
 
         [Test]
+        public void CharRoundMacroFormulaTest()
+        {
+            WorkbookStream wbs = TestHelpers.GetCharRoundMacroWorkbookStream();
+            List<Formula> formulas = wbs.GetAllRecordsByType<Formula>();
+            Formula firstFormula = formulas.First();
+
+            List<AbstractPtg> ptgStack = firstFormula.ptgStack.Reverse().ToList();
+            Assert.AreEqual(typeof(PtgInt),ptgStack[0].GetType());
+            Assert.AreEqual(typeof(PtgInt), ptgStack[1].GetType());
+            Assert.AreEqual(typeof(PtgFunc), ptgStack[2].GetType());
+            Assert.AreEqual(typeof(PtgFunc), ptgStack[3].GetType());
+        }
+
+        [Test]
         public void TestLabelSerialization()
         {
             WorkbookStream macroWorkbookStream = TestHelpers.GetMultiSheetMacroBytes();
@@ -83,6 +97,30 @@ namespace UnitTests
             byte[] cloneBytes = cloneLabel.GetBytes();
 
             Assert.AreEqual(labelBytes, cloneBytes);
+        }
+
+        [Test]
+        public void AutoOpenSerializationTest()
+        {
+            WorkbookStream autoOpenStream = new WorkbookStream(TestHelpers.GetAutoOpenTestBytes());
+            List<Lbl> lbls = autoOpenStream.GetAllRecordsByType<Lbl>();
+
+            //auto_open_test.xls contains a Lbl for Auto_Open222
+            Lbl autoOpenLabel = lbls.First(l => l.fBuiltin);
+            byte[] labelBytes = autoOpenLabel.Name.Bytes;
+
+            //Should be length 4, 1 byte for the builtin string lookup, 3 bytes for 222
+            Assert.AreEqual(4, autoOpenLabel.cch);
+
+            //Not a unicode string, so fHighBit is 0
+            Assert.AreEqual((byte)0x00, labelBytes[0]);
+            //Starts with the Auto_Open builtin value of 1
+            Assert.AreEqual((byte)0x01, labelBytes[1]);
+
+            //Should be followed by whatever we append to the end, in this case 222
+            Assert.AreEqual((byte)'2', labelBytes[2]);
+            Assert.AreEqual((byte)'2', labelBytes[3]);
+            Assert.AreEqual((byte)'2', labelBytes[4]);
         }
 
         [Test]

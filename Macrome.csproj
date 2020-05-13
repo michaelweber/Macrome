@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>Macrome</AssemblyName>
     <RootNamespace>Macrome</RootNamespace>
-    <Version>0.1.2</Version>
+    <Version>0.1.3</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Description>Build an obfuscated XLS Macro Document or Deobfuscate an existing malicious XLS Macro Document</Description>
     <Copyright>© 2020 Michael Weber</Copyright>
@@ -45,6 +45,10 @@
     <ContentWithTargetPath Include="Docs\default_macro_template.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>default_macro_template.xls</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Docs\macro_example.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>macro-example.txt</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Docs\popcalc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

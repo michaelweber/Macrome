@@ -20,6 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="TestDocs\auto_open_test.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestDocs\char-round-macro.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestDocs\combined-with-auto-open.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

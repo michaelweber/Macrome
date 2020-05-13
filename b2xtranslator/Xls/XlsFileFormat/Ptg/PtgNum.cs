@@ -20,5 +20,14 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.type = PtgType.Operand;
             this.popSize = 1;
         }
+
+        public PtgNum(double number, PtgDataType dt = PtgDataType.REFERENCE) : base(PtgNumber.PtgNum, dt)
+        {
+            this.Length = 9;
+            this.type = PtgType.Operand;
+            this.popSize = 1;
+
+            this.Data = Convert.ToString(number, CultureInfo.GetCultureInfo("en-US"));
+        }
     }
 }

@@ -70,6 +70,31 @@ namespace UnitTests
             }
         }
 
+        public static byte[] GetAutoOpenTestBytes()
+        {
+            string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\auto_open_test.xls";
+            using (var fs = new FileStream(template, FileMode.Open))
+            {
+                StructuredStorageReader ssr = new StructuredStorageReader(fs);
+                var wbStream = ssr.GetStream("Workbook");
+                byte[] wbBytes = new byte[wbStream.Length];
+                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                return wbBytes;
+            }
+        }
+
+        public static WorkbookStream GetCharRoundMacroWorkbookStream()
+        {
+            string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\char-round-macro.xls";
+            using (var fs = new FileStream(template, FileMode.Open))
+            {
+                StructuredStorageReader ssr = new StructuredStorageReader(fs);
+                var wbStream = ssr.GetStream("Workbook");
+                byte[] wbBytes = new byte[wbStream.Length];
+                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                return new WorkbookStream(wbBytes);
+            }
+        }
         public static WorkbookStream GetMultiSheetMacroBytes()
         {
             string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\combined-with-auto-open.xls";

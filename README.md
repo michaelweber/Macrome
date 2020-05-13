@@ -40,7 +40,15 @@ Note that using a majority alpha-numeric payload will reduce the size of the mac
 Currently this will only work with `x86` payloads, but `x64` support is coming soon, along with support for loading .NET binaries.
 
 ### Macro Payload Usage
-Technically possible, but there's more work to do on this both implementation and documentation side.
+Similar to binary payload usage, a decoy document must first be generated. Next, a text file containing the macros to run should be created. Macros should be separated by newline characters and will be written to column B starting with row 1. A basic example macro is provided in `/Docs/macro_example.txt`.
+
+Finally run the command:
+
+~~~
+dotnet Macrome.dll build --decoy-document decoy_document.xls --payload macro-example.txt --payload-type Macro
+~~~
+
+Note the usage of the `payload-type` flag set to `Macro`. 
 
 ## Deobfuscate Mode
 Run Macrome with the `deobfuscate` command to take an obfuscated XLS Binary document and attempt to reverse several anti-analysis behaviors. `dotnet Macrome.dll deobfuscate -h` will display full usage instructions. Currently, by default this mode will:

@@ -106,14 +106,24 @@ namespace Macrome
 
         public static Stack<AbstractPtg> GetCharPtgForInt(ushort charInt)
         {
-            //TODO [Stealth] Go back to using PtgFunc instead of PtgFuncVar to avoid easy signature
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
 
             Random r = new Random();
 
-            ptgStack.Push(new PtgInt(charInt));
-            ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
-            ptgStack.Push(new PtgRef(r.Next(1000,2000), r.Next(0x10,0x100),false,false,AbstractPtg.PtgDataType.VALUE));
+            //Allegedly we max out at 0xFF for column values...could be a nice accidental way of creating alternate references though
+            //Generate a random PtgRef to start the stack - if it's an empty cell, this is a no-op if we end with a PtgConcat
+            ptgStack.Push(new PtgRef(r.Next(1000, 2000), r.Next(0x10, 0xFF), false, false, AbstractPtg.PtgDataType.VALUE));
+
+            ptgStack.Push(new PtgNum(charInt));
+            ptgStack.Push(new PtgInt(0));
+
+            ptgStack.Push(new PtgFunc(FtabValues.ROUND, AbstractPtg.PtgDataType.VALUE));
+
+            //An alternate way to invoke the CHAR function by using PtgFuncVar instead
+            //ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
+
+            //Merge the random PtgRef we generate at the beginning
             ptgStack.Push(new PtgConcat());
             return ptgStack;
         }
@@ -157,6 +167,7 @@ namespace Macrome
                 Cell curCell = new Cell(curRow, curCol, ixfe);
                 createdCells.Add(curCell);
                 Formula charFrm = new Formula(curCell, FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+                byte[] formulaBytes = charFrm.GetBytes();
                 formulaList.Add(charFrm);
                 curRow += 1;
             }
