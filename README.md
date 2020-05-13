@@ -1,5 +1,5 @@
 # Macrome
-An Excel Macro Document Reader/Writer for Red Teamers & Analysts.
+An Excel Macro Document Reader/Writer for Red Teamers & Analysts. A corresponding blog post describing what this tool actually does can be found [here](https://malware.pizza/2020/05/12/evading-av-with-excel-macros-and-biff8-xls/).
 
 ![An example created document using the default template.](Docs/macrome.png)
 
