@@ -23,6 +23,9 @@
     <None Update="TestDocs\auto_open_test.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestDocs\builtin_hidden_lbl.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestDocs\char-round-macro.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

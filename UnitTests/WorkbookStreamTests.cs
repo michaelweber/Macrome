@@ -127,7 +127,7 @@ namespace UnitTests
         }
 
         [Test]
-        public void TestDeobfuscation()
+        public void TestGetAutoOpenLabels()
         {
             byte[] wbBytes = TestHelpers.GetMacroTestBytes();
             WorkbookStream wbs = new WorkbookStream(wbBytes);
@@ -136,6 +136,33 @@ namespace UnitTests
 
             List<Lbl> labels = wbs.GetAutoOpenLabels();
             Assert.AreEqual(1, labels.Count);
+
+            WorkbookStream hiddenLblSheet = TestHelpers.GetBuiltinHiddenLblSheet();
+            labels = hiddenLblSheet.GetAutoOpenLabels();
+            Assert.AreEqual(1, labels.Count);
+        }
+
+        [Test]
+        public void TestNeuterCells()
+        {
+            WorkbookStream wbs = TestHelpers.GetBuiltinHiddenLblSheet();
+
+            WorkbookEditor wbe = new WorkbookEditor(wbs);
+
+            wbs = wbe.NeuterAutoOpenCells();
+
+            Formula autoOpenCell = wbs.GetAllRecordsByType<Formula>().First();
+            List<AbstractPtg> openCellPtgStack = autoOpenCell.ptgStack.ToList();
+
+            Assert.AreEqual(typeof(PtgFunc), openCellPtgStack[0].GetType());
+            Assert.AreEqual(typeof(PtgConcat), openCellPtgStack.Last().GetType());
+
+            PtgFunc firstItem = (PtgFunc) openCellPtgStack[0];
+            Assert.AreEqual(FtabValues.HALT, firstItem.Ftab);
+
+            ExcelDocWriter writer = new ExcelDocWriter();
+            writer.WriteDocument(TestHelpers.AssemblyDirectory + Path.DirectorySeparatorChar + "neutered-sheet.xls", wbs.ToBytes());
+
         }
 
         [Test]

@@ -48,7 +48,7 @@
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Docs\macro_example.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <TargetPath>macro-example.txt</TargetPath>
+      <TargetPath>macro_example.txt</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Docs\popcalc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

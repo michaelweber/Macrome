@@ -138,6 +138,14 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             }
         }
 
+        public void SetCellParsedFormula(CellParsedFormula cellParsedFormula)
+        {
+            this.cce = cellParsedFormula.cce;
+            this.ptgStack = cellParsedFormula.PtgStack;
+
+            this._length = CalculateLength();
+        }
+
         public Formula(IStreamReader reader, RecordType id, ushort length)
             : base(reader, id, length)
         {

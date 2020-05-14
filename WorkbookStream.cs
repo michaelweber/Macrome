@@ -228,6 +228,13 @@ namespace Macrome
             foreach (var label in labels)
             {
                 string normalizedName = "";
+
+                //Detect built-in AutoOpen labels as well
+                if (label.fBuiltin && label.Name.Bytes[1] == 0x01)
+                {
+                    autoOpenLabels.Add(label);
+                }
+
                 foreach (char c in label.Name.Value)
                 {
                     if ((int)c >= 0x20 && (int)c < 0x7F) normalizedName += c;
@@ -240,6 +247,29 @@ namespace Macrome
             }
 
             return autoOpenLabels;
+        }
+
+        public List<BOF> GetMacroSheetBOFs()
+        {
+            List<BoundSheet8> sheets = GetAllRecordsByType<BoundSheet8>().ToList();
+            
+            //Each BoundSheet is mapped to the 1+Nth BOF record (BoundSheet 1 is the 2nd record, etc.)
+            List<BOF> bofs = GetAllRecordsByType<BOF>();
+
+            List<BOF> macroSheetBofs = new List<BOF>();
+
+            int sheetOffset = 1;
+            foreach (var sheet in sheets)
+            {
+                if (sheet.dt == BoundSheet8.SheetType.Macrosheet)
+                {
+                    macroSheetBofs.Add(bofs[sheetOffset]);
+                }
+
+                sheetOffset += 1;
+            }
+
+            return macroSheetBofs;
         }
 
         /// <summary>

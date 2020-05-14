@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using b2xtranslator.OpenXmlLib.SpreadsheetML;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Structures;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.xls.XlsFileFormat.Records;
+using b2xtranslator.xls.XlsFileFormat.Structures;
 
 namespace Macrome
 {
@@ -82,10 +84,13 @@ namespace Macrome
         public WorkbookStream NormalizeAutoOpenLabels()
         {
             List<Lbl> autoOpenLabels = WbStream.GetAutoOpenLabels();
+            int labelNumber = 1;
             foreach (var label in autoOpenLabels)
             {
                 Lbl fixedLabel = ((BiffRecord) label.Clone()).AsRecordType<Lbl>();
-                fixedLabel.SetName(new XLUnicodeStringNoCch("Auto_Open"));
+                fixedLabel.fHidden = false;
+                fixedLabel.SetName(new XLUnicodeStringNoCch("Auto_Open" + labelNumber));
+                labelNumber += 1;
                 WbStream = WbStream.ReplaceRecord(label, fixedLabel);
             }
 
@@ -153,25 +158,32 @@ namespace Macrome
             List<SupBook> supBooksExisting = WbStream.GetAllRecordsByType<SupBook>();
             List<ExternSheet> externSheetsExisting = WbStream.GetAllRecordsByType<ExternSheet>();
 
+            ExternSheet lastExternSheet;
+
             if (supBooksExisting.Count > 0 || externSheetsExisting.Count > 0)
             {
-                throw new NotImplementedException("Use a Decoy Document with no Labels");
+                lastExternSheet = externSheetsExisting.Last();
+            }
+            else
+            {
+                BiffRecord lastCountryRecord = WbStream.GetAllRecordsByType<Country>().Last();
+
+                SupBook supBookRecord = new SupBook(sheets.Count, 0x401);
+                int macroOffset = sheets.TakeWhile(s => s.dt != BoundSheet8.SheetType.Macrosheet).Count();
+                ExternSheet externSheetRecord = new ExternSheet(1, new List<XTI>() { new XTI(0, macroOffset, macroOffset) });
+
+                WbStream = WbStream.InsertRecord(supBookRecord, lastCountryRecord);
+                WbStream = WbStream.InsertRecord(externSheetRecord, supBookRecord);
+                lastExternSheet = externSheetRecord;
             }
 
-            BiffRecord lastCountryRecord = WbStream.GetAllRecordsByType<Country>().Last();
-
-            SupBook supBookRecord = new SupBook(sheets.Count, 0x401);
-            int macroOffset = sheets.TakeWhile(s => s.dt != BoundSheet8.SheetType.Macrosheet).Count();
-            ExternSheet externSheetRecord = new ExternSheet(1, new List<XTI>() {new XTI(0, macroOffset, macroOffset) });
 
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
             ptgStack.Push(new PtgRef3d(rw, col, 0));
             Lbl newLbl = new Lbl(label, 0);
             newLbl.SetRgce(ptgStack);
 
-            WbStream = WbStream.InsertRecord(supBookRecord, lastCountryRecord);
-            WbStream = WbStream.InsertRecord(externSheetRecord, supBookRecord);
-            WbStream = WbStream.InsertRecord(newLbl, externSheetRecord);
+            WbStream = WbStream.InsertRecord(newLbl, lastExternSheet);
             WbStream = WbStream.FixBoundSheetOffsets();
 
             return WbStream;
@@ -192,6 +204,60 @@ namespace Macrome
         public WorkbookStream ObfuscateAutoOpen()
         {
             WbStream = WbStream.ObfuscateAutoOpen();
+            return WbStream;
+        }
+
+        public WorkbookStream NeuterAutoOpenCells()
+        {
+            List<Lbl> autoOpenLbls = WbStream.GetAutoOpenLabels();
+
+            List<BOF> macroSheetBofs = WbStream.GetMacroSheetBOFs();
+
+            List<BiffRecord> macroSheetRecords =
+                macroSheetBofs.SelectMany(bof => WbStream.GetRecordsForBOFRecord(bof)).ToList();
+
+            List<BiffRecord> macroFormulaRecords = macroSheetRecords.Where(record => record.Id == RecordType.Formula).ToList();
+            List<Formula> macroFormulas = macroFormulaRecords.Select(r => r.AsRecordType<Formula>()).ToList();
+
+            foreach (Lbl autoOpenLbl in autoOpenLbls)
+            {
+                int autoOpenRw, autoOpenCol;
+                switch (autoOpenLbl.rgce.First())
+                {
+                    case PtgRef3d ptgRef3d:
+                        autoOpenCol = ptgRef3d.col;
+                        autoOpenRw = ptgRef3d.rw;
+                        break;
+                    case PtgRef ptgRef:
+                        autoOpenRw = ptgRef.rw;
+                        autoOpenCol = ptgRef.col;
+                        break;
+                    default:
+                        throw new NotImplementedException("Auto_Open Ptg Expressions that aren't PtgRef or PtgRef3d Not Implemented");
+                }
+
+                //TODO Add proper sheet referencing here so we don't just grab them all
+                List<Formula> matchingFormulas =
+                    macroFormulas.Where(f => f.col == autoOpenCol && f.rw == autoOpenRw).ToList();
+
+                foreach (var matchingFormula in matchingFormulas)
+                {
+                    //TODO [Bug] This will currently break the entire sheet from loading. Not COMPLETED
+                    Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+                    ptgStack.Push(new PtgConcat());
+                    AbstractPtg[] ptgArray = matchingFormula.ptgStack.Reverse().ToArray();
+                    foreach (var elem in ptgArray)
+                    {
+                        ptgStack.Push(elem);
+                    }
+                    ptgStack.Push(new PtgFunc(FtabValues.HALT, AbstractPtg.PtgDataType.VALUE));
+                    Formula clonedFormula = ((BiffRecord) matchingFormula.Clone()).AsRecordType<Formula>();
+                    clonedFormula.SetCellParsedFormula(new CellParsedFormula(ptgStack));
+
+                    WbStream = WbStream.ReplaceRecord(matchingFormula, clonedFormula);
+                }
+            }
+
             return WbStream;
         }
 

@@ -101,6 +101,12 @@ namespace Macrome
             string decoyDocPath = decoyDocument.FullName;
 
             WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
+
+            if (wbs.GetAllRecordsByType<SupBook>().Count > 0)
+            {
+                throw new NotImplementedException("Please use a decoy document with no existing Labels.");
+            }
+
             WorkbookEditor wbe = new WorkbookEditor(wbs);
 
             wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.SuperHidden);
