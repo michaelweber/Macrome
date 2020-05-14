@@ -58,7 +58,7 @@ Run Macrome with the `deobfuscate` command to take an obfuscated XLS Binary docu
 
 For example, to deobfuscate a malicious XLS 2003 macro file at `path/to/obfuscated_file.xls`, run `dotnet Macrome.dll deobfuscate --path path/to/obfuscated_file.xls`. This will generate a copy of the obfuscated file which will be easier to analyze manually or with tools.
 
-*NOTE*: This doesn't do very much yet, it's mainly meant to demonstrate how using the modified b2xtranslator library can help automate deobfuscation. More useful features are coming soon. 
+**NOTE**: *This doesn't do very much yet, it's mainly meant to demonstrate how using the modified b2xtranslator library can help automate deobfuscation. More useful features are coming soon.* 
 
 # Acknowledgements 
 Big thanks to all the shoulders that I was able to stand on in order to write this.
