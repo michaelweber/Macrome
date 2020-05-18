@@ -72,7 +72,7 @@ namespace Macrome
         /// <param name="decoyDocument">File path to the base Excel 2003 sheet that should be visible to users.</param>
         /// <param name="payload">Either binary shellcode or a newline separated list of Excel Macros to execute</param>
         /// <param name="payloadType">Specify if the payload is binary shellcode or a macro list. Defaults to Shellcode</param>
-        /// <param name="preamble">Preamble macro code to include for either payload type</param>
+        /// <param name="preamble">Preamble macro code to include with binary shellcode payload type</param>
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
