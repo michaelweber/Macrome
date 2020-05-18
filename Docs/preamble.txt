@@ -1,1 +1,1 @@
-=ALERT("I'm doing stuff!")
+=IF(GET.WORKSPACE(13)<770, CLOSE(FALSE),)
