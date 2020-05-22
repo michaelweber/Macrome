@@ -18,6 +18,8 @@ cd bin/Debug/netcoreapp2.0
 dotnet Macrome.dll deobfuscate --path obfuscated_document.xls
 ~~~
 
+Note that a 2.x build of dotnet is required for this to work as configured - one can be grabbed from  https://dotnet.microsoft.com/download/dotnet-core/2.1.
+
 # Usage
 Run Macrome by either using `dotnet run` from the solution directory, or `dotnet` against the built Macrome binary. There are two modes of operation for Macrome - Build mode and Deobfuscation mode. 
 
