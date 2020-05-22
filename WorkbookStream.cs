@@ -296,7 +296,7 @@ namespace Macrome
             //fefe, ffff, feff, fffe, ffef, fff0, fff1, fff6, fefd, 0000, dddd
             //Pretty much any character that is invalid unicode
             //TODO [Stealth] Randomize which invalid unicode characters are injected into this string
-            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000\ufefeA\uffffu\ufefft\ufffeo\uffef_\ufff0O\ufff1p\ufff6e\ufefdn\udddd", true));
+            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000\uaeee\u9FFF\ucccc\ufefeA\uffffu\ufefft\ufffeo\uffef_\ufff0O\ufff1p\ufff6e\ufefdn\udddd", true));
             replaceLabelStringLbl.fBuiltin = false;
 
             // Hidden removes from the label manager entirely, but doesn't seem to work if fBuiltin is false
@@ -311,6 +311,13 @@ namespace Macrome
         public byte[] ToBytes()
         {
             return RecordHelper.ConvertBiffRecordsToBytes(_biffRecords);
+        }
+
+
+
+        public override string ToString()
+        {
+            return string.Join("\n",_biffRecords.Select(record => record.ToHexDumpString()));
         }
     }
 }

@@ -23,5 +23,13 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.Length = (uint)(3 + st.rgb.Length);   // length = 1 byte Ptgtype + 1byte cch + 1byte highbyte
             
         }
+
+        public PtgStr(string str, PtgDataType dt = PtgDataType.VALUE) : base(PtgNumber.PtgStr, dt)
+        {
+            this.type = PtgType.Operand;
+            this.popSize = 1;
+            this.Data = ExcelHelperClass.EscapeFormulaString(str);
+            this.Length = (uint)(3 + str.Length);   // length = 1 byte Ptgtype + 1byte cch + 1byte highbyte
+        }
     }
 }

@@ -139,7 +139,7 @@ namespace Macrome
             return WbStream;
         }
 
-        public WorkbookStream AddLabel(string label, int rw, int col)
+        public WorkbookStream AddLabel(string label, Stack<AbstractPtg> rgce, bool isMacroStack = false)
         {
             /*
              * Labels require a reference to an XTI index which is used to say which
@@ -177,11 +177,15 @@ namespace Macrome
                 lastExternSheet = externSheetRecord;
             }
 
-
-            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
-            ptgStack.Push(new PtgRef3d(rw, col, 0));
             Lbl newLbl = new Lbl(label, 0);
-            newLbl.SetRgce(ptgStack);
+
+            if (isMacroStack)
+            {
+                newLbl.fProc = true;
+                newLbl.fFunc = true;
+            }
+            
+            newLbl.SetRgce(rgce);
 
             WbStream = WbStream.InsertRecord(newLbl, lastExternSheet);
             WbStream = WbStream.FixBoundSheetOffsets();
@@ -189,6 +193,12 @@ namespace Macrome
             return WbStream;
         }
 
+        public WorkbookStream AddLabel(string label, int rw, int col)
+        {
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+            ptgStack.Push(new PtgRef3d(rw, col, 0));
+            return AddLabel(label, ptgStack);
+        }
 
         /// <summary>
         /// We use a few tricks here to obfuscate the Auto_Open Lbl BIFF records.

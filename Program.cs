@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
+using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.StructuredStorage.Reader;
 
@@ -29,6 +30,27 @@ namespace Macrome
             }
         }
 
+        /// <summary>
+        /// Iterate through every BIFF Record and Dump it
+        /// </summary>
+        /// <param name="path">Path to the XLS file to dump</param>
+        public static void Dump(FileInfo path)
+        {
+            if (path == null)
+            {
+                Console.WriteLine("path argument must be specified in Deobfuscate mode. Run deobfuscate -h for usage instructions.");
+                return;
+            }
+
+            if (path.Exists == false)
+            {
+                Console.WriteLine("path file does not exist.");
+                return;
+            }
+
+            WorkbookStream wbs = new WorkbookStream(path.FullName);
+            Console.WriteLine(wbs.ToString());
+        }
 
         /// <summary>
         /// Deobfuscate a legacy XLS document to enable simpler analysis.
@@ -159,11 +181,16 @@ namespace Macrome
                 MethodInfo deobfuscateMethodInfo = typeof(Program).GetMethod(nameof(Deobfuscate));
                 deobfuscateCommand.ConfigureFromMethod(deobfuscateMethodInfo);
 
+                Command dumpCommand = new Command("dump", null);
+                MethodInfo dumpMethodInfo = typeof(Program).GetMethod(nameof(Dump));
+                dumpCommand.ConfigureFromMethod(dumpMethodInfo);
+
+
                 RootCommand rootCommand = new RootCommand("Build an obfuscated XLS Macro Document, or Deobfuscate an existing malicious XLS Macro Document.")
                 {
                     deobfuscateCommand,
                     buildCommand,
-                    
+                    dumpCommand    
                 };
 
                 CommandLineBuilder builder = new CommandLineBuilder(rootCommand);

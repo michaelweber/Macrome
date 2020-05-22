@@ -95,6 +95,17 @@ namespace Macrome
             return ptgStack;
         }
 
+        public static Stack<AbstractPtg> GetAlertPtgStack(string alertString)
+        {
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+
+            ptgStack.Push(new PtgStr("Hello World!", AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgInt(2, AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgFuncVar(CetabValues.ALERT, 2, AbstractPtg.PtgDataType.VALUE));
+
+            return ptgStack;
+        }
+
         public static Formula GetGotoFormulaForCell(int rw, int col, int dstRw, int dstCol, int ixfe = 15)
         {
             Cell curCell = new Cell(rw, col, ixfe);
@@ -182,7 +193,11 @@ namespace Macrome
             PtgRef srcCell = new PtgRef(curRow - 1, curCol, false, false, AbstractPtg.PtgDataType.VALUE);
             formulaPtgStack.Push(srcCell);
 
-            PtgRef destCell = new PtgRef(dstRw, dstCol, false, false);
+            Random r = new Random();
+            int randomBitStuffing = r.Next(1, 32) * 0x100;
+            
+
+            PtgRef destCell = new PtgRef(dstRw, dstCol + randomBitStuffing, false, false);
             formulaPtgStack.Push(destCell);
 
             PtgFuncVar funcVar = new PtgFuncVar(CetabValues.FORMULA, 2);
