@@ -76,8 +76,8 @@ namespace Macrome
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
-        public static void Build(FileInfo decoyDocument, FileInfo payload,
-            PayloadType payloadType = PayloadType.Shellcode, string preamble="Docs/preamble.txt",
+        public static void Build(FileInfo decoyDocument, FileInfo payload, string preamble,
+            PayloadType payloadType = PayloadType.Shellcode, 
             string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false)
         {
             if (decoyDocument == null || payload == null)
@@ -100,10 +100,14 @@ namespace Macrome
             List<BiffRecord> defaultMacroSheetRecords = GetDefaultMacroSheetRecords();
 
             string decoyDocPath = decoyDocument.FullName;
-            string preambleCodePath = new FileInfo(preamble).FullName;
 
             WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
-            List<string> preambleCode = new List<string>(File.ReadAllLines(preambleCodePath));
+            List<string> preambleCode = new List<string>();
+            if (preamble != null)
+            {
+                string preambleCodePath = new FileInfo(preamble).FullName;
+                preambleCode = new List<string>(File.ReadAllLines(preambleCodePath));
+            }
 
             if (wbs.GetAllRecordsByType<SupBook>().Count > 0)
             {

