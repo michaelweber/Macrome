@@ -130,7 +130,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         {
             this.hsState = hsState;
             this.dt = dt;
-            stName = new ShortXLUnicodeString(sheetName);
+            stName = new ShortXLUnicodeString(sheetName, false);
             //lbPlyPos (4) hsState (1) dt (1) stName.cch (1) stName.fHighByte (1) + stName.rgb (strlen)
             this._length = (uint) (8 + sheetName.Length);
         }

@@ -70,7 +70,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                     break;
                 case PtgStr ptgStr:
                     string unescapedString = ExcelHelperClass.UnescapeFormulaString(ptgStr.getData());
-                    ShortXLUnicodeString ptgString = new ShortXLUnicodeString(unescapedString);
+                    ShortXLUnicodeString ptgString = new ShortXLUnicodeString(unescapedString, ptgStr.isUnicode);
                     bw.Write(ptgString.Bytes);
                     break;
                 case PtgFuncVar ptgFuncVar:

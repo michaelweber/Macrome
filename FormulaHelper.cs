@@ -99,7 +99,7 @@ namespace Macrome
         {
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
 
-            ptgStack.Push(new PtgStr("Hello World!", AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgStr("Hello World!", false, AbstractPtg.PtgDataType.VALUE));
             ptgStack.Push(new PtgInt(2, AbstractPtg.PtgDataType.VALUE));
             ptgStack.Push(new PtgFuncVar(CetabValues.ALERT, 2, AbstractPtg.PtgDataType.VALUE));
 
@@ -175,6 +175,13 @@ namespace Macrome
             foreach (char c in str)
             {
                 Stack<AbstractPtg> ptgStack = GetCharPtgForInt(Convert.ToUInt16(c));
+
+                ushort charValue = Convert.ToUInt16(c);
+                if (charValue > 0xFF)
+                {
+                    ptgStack = new Stack<AbstractPtg>();
+                    ptgStack.Push(new PtgStr("" + c, true));
+                }
                 Cell curCell = new Cell(curRow, curCol, ixfe);
                 createdCells.Add(curCell);
                 Formula charFrm = new Formula(curCell, FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));

@@ -39,11 +39,19 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Structures
         public byte[] rgb;
 
 
-        public ShortXLUnicodeString(string str)
+        public ShortXLUnicodeString(string str, bool isUnicode)
         {
-            this.cch = (byte) str.Length;
-            this.rgb = Encoding.GetEncoding(1252).GetBytes(str);
-            this.fHighByte = false;
+            this.cch = (byte)str.Length;
+            if (isUnicode)
+            {
+                this.rgb = Encoding.Unicode.GetBytes(str);
+                this.fHighByte = true;
+            }
+            else
+            {
+                this.rgb = Encoding.GetEncoding(1252).GetBytes(str);
+                this.fHighByte = false;
+            }
         }
 
         public ShortXLUnicodeString(IStreamReader reader)
