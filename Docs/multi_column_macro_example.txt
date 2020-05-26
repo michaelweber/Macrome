@@ -1,0 +1,3 @@
+﻿=SET.NAME("RunMe",EVALUATE("D1"));;=ALERT("LOOK AT THIS HIDDEN MACRO!",2)
+=RunMe();;=HALT();
+=HALT();

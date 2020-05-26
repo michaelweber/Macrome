@@ -2,7 +2,7 @@
   "profiles": {
     "Macrome": {
       "commandName": "Project",
-      "commandLineArgs": "build --decoy-document decoy_document.xls --payload popcalc.bin"
+      "commandLineArgs": "b --decoy-document decoy_document.xls --payload-type Macro --payload multi_column_macro_example.txt --output-file-name multi_col_macro.xls"
     }
   }
 }

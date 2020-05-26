@@ -150,11 +150,25 @@ namespace Macrome
             int dstCurRow = dstRwStart;
             int dstCurCol = dstColStart;
 
+            //TODO [Stealth] Break generated formula apart with different RUN()/GOTO() actions 
             foreach (string str in strings)
             {
-                List<BiffRecord> stringFormulas = ConvertStringToFormulas(str, curRow, curCol, dstCurRow, dstCurCol, ixfe);
-                //Generates N records, and then saves space for the extra cell where the generated formula is dropped
-                curRow += stringFormulas.Count;
+                string[] rowStrings = str.Split(';');
+                List<BiffRecord> stringFormulas = new List<BiffRecord>();
+                for (int colOffset = 0; colOffset < rowStrings.Length; colOffset += 1)
+                {
+                    //Skip empty strings
+                    if (rowStrings[colOffset].Trim().Length == 0)
+                    {
+                        continue;
+                    }
+
+                    List<BiffRecord> formulas = ConvertStringToFormulas(rowStrings[colOffset], curRow, curCol, dstCurRow, dstCurCol + colOffset, ixfe);
+                   stringFormulas.AddRange(formulas);
+
+                   curRow += formulas.Count;
+                }
+
                 dstCurRow += 1;
 
                 formulaList.AddRange(stringFormulas);

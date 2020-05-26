@@ -50,6 +50,14 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>macro_example.txt</TargetPath>
     </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Docs\multi_column_macro_example.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>multi_column_macro_example.txt</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Docs\preamble.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>preamble.txt</TargetPath>
+    </ContentWithTargetPath>
     <ContentWithTargetPath Include="Docs\popcalc.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>popcalc.bin</TargetPath>
