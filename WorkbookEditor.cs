@@ -106,7 +106,7 @@ namespace Macrome
             return WbStream;
         }
 
-        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, byte[] binaryPayload = null)
+        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, int dstRwStart = 0, int dstColStart = 0, byte[] binaryPayload = null)
         {
             List<BoundSheet8> sheets = WbStream.GetAllRecordsByType<BoundSheet8>();
             int macroSheetIndex = sheets.TakeWhile(sheet => sheet.dt != BoundSheet8.SheetType.Macrosheet).Count();
@@ -115,25 +115,21 @@ namespace Macrome
             List<BiffRecord> macroRecords = WbStream.GetRecordsForBOFRecord(macroBof);
 
             WorkbookStream macroStream = new WorkbookStream(macroRecords);
-            List<Formula> macroFormulas = macroStream.GetAllRecordsByType<Formula>();
-            int numRecordsInSheet = macroFormulas.Count;
 
-            List<BiffRecord> formulasToAdd = FormulaHelper.ConvertStringsToRecords(macroStrings, numRecordsInSheet - 1, 0, 0, 1);
+            //The macro sheet template contains a single formula record to replace
+            Formula replaceMeFormula = macroStream.GetAllRecordsByType<Formula>().Last();
+            
+            List<BiffRecord> formulasToAdd = FormulaHelper.ConvertStringsToRecords(macroStrings, rwStart, colStart, dstRwStart, dstColStart);
 
             if (binaryPayload != null)
             {
                 List<string> payload = FormulaHelper.BuildPayloadMacros(binaryPayload);
-                formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payload, numRecordsInSheet - 1 + formulasToAdd.Count, 0, 0, 2));
+                formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payload, formulasToAdd.Count, colStart, dstRwStart, dstColStart + 1));
             }
-            
-            Formula haltFormula = macroFormulas.Last();
-            Formula modifiedHaltFormula = ((BiffRecord)haltFormula.Clone()).AsRecordType<Formula>();
-            modifiedHaltFormula.rw = (ushort)(numRecordsInSheet - 1 + formulasToAdd.Count);
 
-            Formula gotoFormula = FormulaHelper.GetGotoFormulaForCell(modifiedHaltFormula.rw, modifiedHaltFormula.col, 0, 1);
-
-            WorkbookStream modifiedStream = WbStream.InsertRecords(formulasToAdd, haltFormula);
-            modifiedStream = modifiedStream.ReplaceRecord(haltFormula, gotoFormula);
+            Formula gotoFormula = FormulaHelper.GetGotoFormulaForCell(formulasToAdd.Count, colStart, dstRwStart, dstColStart);
+            WorkbookStream modifiedStream = WbStream.ReplaceRecord(replaceMeFormula, gotoFormula);
+            modifiedStream = modifiedStream.InsertRecords(formulasToAdd, gotoFormula);
 
             WbStream = modifiedStream;
             return WbStream;

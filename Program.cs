@@ -140,10 +140,14 @@ namespace Macrome
 
             wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.SuperHidden);
 
-            wbe.AddLabel("Auto_Open", 0, 0);
-
             List<string> macros = null;
             byte[] binaryPayload = null;
+
+            //TODO make this customizable
+            int rwStart = 0;
+            int colStart = 0;
+            int dstRwStart = 0;
+            int dstColStart = 1;
 
             switch (payloadType)
             {
@@ -152,6 +156,10 @@ namespace Macrome
                     binaryPayload = File.ReadAllBytes(payload.FullName);
                     break;
                 case PayloadType.Macro:
+                    rwStart = 0;
+                    colStart = 0xff;
+                    dstRwStart = 0;
+                    dstColStart = 0;
                     macros = File.ReadAllLines(payload.FullName).ToList();
                     break;
                 default:
@@ -159,8 +167,9 @@ namespace Macrome
                         "payloadType");
             }
 
-            wbe.SetMacroSheetContent(macros, binaryPayload);
+            wbe.SetMacroSheetContent(macros, rwStart,colStart, dstRwStart, dstColStart, binaryPayload);
 
+            wbe.AddLabel("Auto_Open", rwStart, colStart);
             wbe.ObfuscateAutoOpen();
 
             ExcelDocWriter writer = new ExcelDocWriter();
