@@ -120,6 +120,41 @@ namespace Macrome
             return cellFormula;
         }
 
+        public static string ConvertA1StringToR1C1String(string cellFormula)
+        {
+            //Remap A1 style references to R1C1 (but ignore anything followed by a " in case its inside an EVALUATE statement)
+            string a1pattern = @"([A-Z]{1,2}\d{1,5})";
+            Regex rg = new Regex(a1pattern);
+            MatchCollection matches = rg.Matches(cellFormula);
+            int stringLenChange = 0;
+
+            //Iterate through each match and then replace it at its offset. We iterate through 
+            //each case manually to prevent overlapping cases from double replacing - ex: SELECT(B1:B111,B1)
+            foreach (var match in matches)
+            {
+                string matchString = ((Match)match).Value;
+                string replaceContent = ConvertA1ToR1C1(matchString);
+                //As we change the string, these indexes will go out of sync, track the size delta to make sure we resync positions
+                int matchIndex = ((Match)match).Index + stringLenChange;
+
+                //If the match is followed by a ", then ignore it
+                int followingIndex = matchIndex + matchString.Length;
+                if (followingIndex < cellFormula.Length && cellFormula[followingIndex] == '"')
+                {
+                    continue;
+                }
+
+                //LINQ replacement for python string slicing
+                cellFormula = new string(cellFormula.Take(matchIndex).
+                    Concat(replaceContent.ToArray()).
+                    Concat(cellFormula.TakeLast(cellFormula.Length - matchIndex - matchString.Length)).ToArray());
+
+                stringLenChange += (replaceContent.Length - matchString.Length);
+            }
+
+            return cellFormula;
+        }
+
         private static string ImportCellFormula(string cellFormula)
         {
             if (cellFormula.Length == 0) return cellFormula;
@@ -140,28 +175,8 @@ namespace Macrome
             //Mainly for use with importing EXCELntDonut macros
             newCellFormula = ReplaceSelectActiveCellFormula(newCellFormula);
 
-            //Remap A1 style references to R1C1
-            string a1pattern = @"[A-Z]{1,2}\d{1,5}";
-            Regex rg = new Regex(a1pattern);
-            MatchCollection matches = rg.Matches(newCellFormula);
-            int stringLenChange = 0;
-
-            //Iterate through each match and then replace it at its offset. We iterate through 
-            //each case manually to prevent overlapping cases from double replacing - ex: SELECT(B1:B111,B1)
-            foreach (var match in matches)
-            {
-                string matchString = ((Match)match).Value;
-                string replaceContent = ConvertA1ToR1C1(matchString);
-                //As we change the string, these indexes will go out of sync, track the size delta to make sure we resync positions
-                int matchIndex = ((Match) match).Index + stringLenChange;
-
-                //LINQ replacement for python string slicing
-                newCellFormula = new string(newCellFormula.Take(matchIndex).
-                    Concat(replaceContent.ToArray()).
-                    Concat(newCellFormula.TakeLast(newCellFormula.Length - matchIndex - matchString.Length)).ToArray());
-
-                stringLenChange += (replaceContent.Length - matchString.Length);
-            }
+            //FORMULA requires R1C1 strings
+            newCellFormula = ConvertA1StringToR1C1String(newCellFormula);
 
             int charReplacements = 0;
             //Remap CHAR() to actual bytes

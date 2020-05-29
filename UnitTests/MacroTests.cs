@@ -76,6 +76,9 @@ namespace UnitTests
                 "=Valloc(0,65536,4096,64)",
                 "=SELECT(B1:B111,B1)",
                 "=SET.VALUE(D1,0)",
+                "=EVALUATE(\"B1\")",
+                "=EVALUATE(\"=B1\")",
+                "šœƒ=B1",
                 "=WHILE(ACTIVE.CELL()<>\"excel\")",
                 "=SET.VALUE(D2,LEN(ACTIVE.CELL()))",
                 "=WProcessMemory(-1,A10+(D1*255),ACTIVE.CELL(),LEN(ACTIVE.CELL()),0)",
@@ -107,7 +110,7 @@ namespace UnitTests
                 "=HALT()"
             };
 
-            List<string> importedMacros = MacroPatterns.ImportMacroPattern(excelntdonutMacros);
+            List<string> importedMacros = excelntdonutMacros.Select(MacroPatterns.ConvertA1StringToR1C1String).ToList();
 
             Assert.AreEqual("=GOTO(R2C1)", importedMacros[0]);
             Assert.AreEqual("=GOTO(R3C1)", importedMacros[1]);
@@ -116,8 +119,11 @@ namespace UnitTests
             Assert.AreEqual("=GOTO(R6C1)", importedMacros[4]);
             Assert.AreEqual("=IF(ISNUMBER(SEARCH(\"32\",GET.WORKSPACE(1))),GOTO(R10C1),GOTO(R21C1))",
             importedMacros[8]);
-            Assert.AreEqual("=R1C2", new String(importedMacros[10].TakeLast(5).ToArray()));
+            Assert.AreEqual("=SELECT(R1C2:R111C2,R1C2)", importedMacros[10]);
             Assert.AreEqual("=SET.VALUE(R1C4,0)", importedMacros[11]);
+            Assert.AreEqual("=EVALUATE(\"B1\")", importedMacros[12]);
+            Assert.AreEqual("=EVALUATE(\"=B1\")", importedMacros[13]);
+            Assert.AreEqual("šœƒ=R1C2", importedMacros[14]);
         }
     }
 }
