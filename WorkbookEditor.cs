@@ -106,7 +106,7 @@ namespace Macrome
             return WbStream;
         }
 
-        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, int dstRwStart = 0, int dstColStart = 0, byte[] binaryPayload = null)
+        private WorkbookStream GetMacroStream()
         {
             List<BoundSheet8> sheets = WbStream.GetAllRecordsByType<BoundSheet8>();
             int macroSheetIndex = sheets.TakeWhile(sheet => sheet.dt != BoundSheet8.SheetType.Macrosheet).Count();
@@ -115,17 +115,39 @@ namespace Macrome
             List<BiffRecord> macroRecords = WbStream.GetRecordsForBOFRecord(macroBof);
 
             WorkbookStream macroStream = new WorkbookStream(macroRecords);
+            return macroStream;
+        }
+
+        public WorkbookStream SetMacroBinaryContent(byte[] payload, int rwStart, int colStart, int dstRwStart,
+            int dstColStart)
+        {
+            List<string> payloadMacros = FormulaHelper.BuildPayloadMacros(payload);
+            List<BiffRecord> formulasToAdd = new List<BiffRecord>();
+            formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payloadMacros, rwStart, colStart, dstRwStart, dstColStart));
+
+            WorkbookStream macroStream = GetMacroStream();
+            try
+            {
+                BiffRecord lastFormulaInSheet = macroStream.GetAllRecordsByType<Formula>().Last();
+                WorkbookStream modifiedStream = WbStream.InsertRecords(formulasToAdd, lastFormulaInSheet);
+                WbStream = modifiedStream;
+                return modifiedStream;
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException(
+                    "SetMacroBinaryContent must be called on a stream with at least 1 existing Formula Record");
+            }
+        }
+
+        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, int dstRwStart = 0, int dstColStart = 0)
+        {
+            WorkbookStream macroStream = GetMacroStream();
 
             //The macro sheet template contains a single formula record to replace
-            Formula replaceMeFormula = macroStream.GetAllRecordsByType<Formula>().Last();
+            Formula replaceMeFormula = macroStream.GetAllRecordsByType<Formula>().First();
             
             List<BiffRecord> formulasToAdd = FormulaHelper.ConvertStringsToRecords(macroStrings, rwStart, colStart, dstRwStart, dstColStart);
-
-            if (binaryPayload != null)
-            {
-                List<string> payload = FormulaHelper.BuildPayloadMacros(binaryPayload);
-                formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payload, formulasToAdd.Count, colStart, dstRwStart, dstColStart + 1));
-            }
 
             int lastGotoCol = formulasToAdd.Last().AsRecordType<Formula>().col;
             int lastGotoRow = formulasToAdd.Last().AsRecordType<Formula>().rw + 1;
