@@ -1,4 +1,6 @@
-﻿using OpenMcdf;
+﻿using System;
+using System.Linq;
+using OpenMcdf;
 using OpenMcdf.Extensions.OLEProperties;
 
 namespace Macrome
@@ -14,6 +16,7 @@ namespace Macrome
         {
             CompoundFile cf = new CompoundFile();
             CFStream workbookStream = cf.RootStorage.AddStream("Workbook");
+
             workbookStream.Write(wbBytes, 0);
 
             OLEPropertiesContainer dsiContainer = new OLEPropertiesContainer(1252, ContainerType.DocumentSummaryInfo);
@@ -25,9 +28,9 @@ namespace Macrome
 
             CFStream siStream = cf.RootStorage.AddStream("\u0005SummaryInformation");
             siContainer.Save(siStream);
-
-
+            
             cf.Save(filePath);
+
         }
 
     }

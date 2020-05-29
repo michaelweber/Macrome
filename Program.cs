@@ -157,10 +157,11 @@ namespace Macrome
                     break;
                 case PayloadType.Macro:
                     rwStart = 0;
-                    colStart = 0xff;
+                    //arbitrary start with plenty of room to grow
+                    colStart = 0xA0;
                     dstRwStart = 0;
                     dstColStart = 0;
-                    macros = File.ReadAllLines(payload.FullName).ToList();
+                    macros = MacroPatterns.ImportMacroPattern(File.ReadAllLines(payload.FullName).ToList());
                     break;
                 default:
                     throw new ArgumentException(string.Format("Invalid PayloadType {0}", payloadType),

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
+using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.StructuredStorage.Reader;
 
 namespace Macrome
@@ -97,6 +99,20 @@ namespace Macrome
             //Skip the 4 byte header
             byte[] bytes = record.GetBytes().Skip(4).ToArray();
             string hexDumpString = HexDump(bytes);
+
+            if (record.Id == RecordType.Formula)
+            {
+                biffString = record.AsRecordType<Formula>().ToString();
+            }
+            else if (record.Id == RecordType.Dimensions)
+            {
+                biffString = record.AsRecordType<Dimensions>().ToString();
+            }
+            else if (record.Id == RecordType.Lbl)
+            {
+                biffString = record.AsRecordType<Lbl>().ToString();
+            }
+
 
             if ((bytes.Length <= maxLength && bytes.Length > 0) ||
                 record.Id == RecordType.Obj)

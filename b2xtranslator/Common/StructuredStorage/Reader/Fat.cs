@@ -108,7 +108,8 @@ namespace b2xtranslator.StructuredStorage.Reader
                 for (int i = 0; i < this._addressesPerSector - 1; i++)
                 {
                     uint fatSector = this._fileHandler.ReadUInt32();
-                    if (fatSector == SectorId.FREESECT)
+                    //Sometimes this can be 0 instead of FREESECT - weird edge case with "corrupted" files
+                    if (fatSector == SectorId.FREESECT || fatSector == 0)
                     {
                         lastFatSectorFound = true;
                         break;

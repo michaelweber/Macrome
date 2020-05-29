@@ -276,6 +276,26 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             Debug.Assert(this.Offset + this.Length == this.Reader.BaseStream.Position);
         }
 
+        public uint Flags
+        {
+            get
+            {
+                uint flags = 0;
+                flags = flags | Utils.BoolToBitmask(this.fHidden, 0x0001);
+                flags = flags | Utils.BoolToBitmask(this.fFunc, 0x0002);
+                flags = flags | Utils.BoolToBitmask(this.fOB, 0x0004);
+                flags = flags | Utils.BoolToBitmask(this.fProc, 0x0008);
+                flags = flags | Utils.BoolToBitmask(this.fCalcExp, 0x0010);
+                flags = flags | Utils.BoolToBitmask(this.fBuiltin, 0x0020);
+                flags = flags | Utils.ByteToBitmask(this.fGrp, 0x0FC0);
+                flags = flags | Utils.BoolToBitmask(this.fReserved1, 0x1000);
+                flags = flags | Utils.BoolToBitmask(this.fPublished, 0x2000);
+                flags = flags | Utils.BoolToBitmask(this.fWorkbookParam, 0x4000);
+                flags = flags | Utils.BoolToBitmask(this.fReserved2, 0x8000);
+                return flags;
+            }
+        }
+
         public override byte[] GetBytes()
         {
             using (MemoryStream stream = new MemoryStream())
@@ -313,6 +333,19 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                 return bw.GetBytesWritten();
             }
 
+        }
+
+
+        public override string ToString()
+        {
+            return string.Format(
+                "Lbl (0x{0} bytes) - grbits: 0x{1} | fBuiltin: {2} | fHidden: {3} | fHighByte: {4} | Name: {5}",
+                Length.ToString("X"),
+                Flags.ToString("X"),
+                fBuiltin,
+                fHidden,
+                Name.fHighByte,
+                Name.Value);
         }
     }
 }

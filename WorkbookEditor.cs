@@ -127,7 +127,10 @@ namespace Macrome
                 formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payload, formulasToAdd.Count, colStart, dstRwStart, dstColStart + 1));
             }
 
-            Formula gotoFormula = FormulaHelper.GetGotoFormulaForCell(formulasToAdd.Count, colStart, dstRwStart, dstColStart);
+            int lastGotoCol = formulasToAdd.Last().AsRecordType<Formula>().col;
+            int lastGotoRow = formulasToAdd.Last().AsRecordType<Formula>().rw + 1;
+
+            Formula gotoFormula = FormulaHelper.GetGotoFormulaForCell(lastGotoRow, lastGotoCol, dstRwStart, dstColStart);
             WorkbookStream modifiedStream = WbStream.ReplaceRecord(replaceMeFormula, gotoFormula);
             modifiedStream = modifiedStream.InsertRecords(formulasToAdd, gotoFormula);
 
