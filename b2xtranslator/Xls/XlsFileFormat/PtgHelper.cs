@@ -203,27 +203,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                     switch (nextPtg)
                     {
                         case PtgFunc ptgFunc:
-                            int numParams;
-                            switch (ptgFunc.Ftab)
-                            {
-                                case FtabValues.CHAR: numParams = 1; break;
-                                case FtabValues.MID: numParams = 3; break;
-                                case FtabValues.ROUND: numParams = 2; break;
-                                case FtabValues.WHILE: numParams = 1; break;
-                                case FtabValues.ABSREF: numParams = 2; break;
-                                case FtabValues.NEXT: numParams = 0; break;
-                                case FtabValues.GOTO: numParams = 1; break;
-                                case FtabValues.ISNUMBER: numParams = 1; break;
-                                case FtabValues.GET_WORKSPACE: numParams = 1; break;
-                                case FtabValues.SET_VALUE: numParams = 2; break;
-                                case FtabValues.ACTIVE_CELL: numParams = 0; break;
-                                case FtabValues.HALT: numParams = 0; break;
-                                case FtabValues.LEN: numParams = 1; break;
-                                default:
-                                    throw new NotImplementedException(
-                                        "Arg Count for " + ptgFunc.Ftab.ToString() + "not implemented.");
-                            }
-
+                            int numParams = PtgFunc.GetParamCountFromFtabValue(ptgFunc.Ftab);
                             string formulaString = ptgFunc.Ftab.ToString().Replace('_', '.') + "(";
                             List<string> args = GetFormulaStringFunctionArgs(ref ptgStack, numParams, showAttributes);
                             formulaString += string.Join(",", args);
@@ -299,7 +279,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                             //If this is a simple operator like + or -
                             if (nextPtg.getLength() == 1)
                             {
-                                //We pop the arguments off the stack in reverse order, hense the 'backwards' ordering
+                                //We pop the arguments off the stack in reverse order, hence the 'backwards' ordering
                                 string formatString = "{2}{1}{0}";
                                 return string.Format(formatString, GetFormulaStringInner(ref ptgStack, 1, showAttributes),
                                     nextPtg.getData(), GetFormulaStringInner(ref ptgStack, 1, showAttributes));

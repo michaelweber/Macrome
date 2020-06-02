@@ -380,6 +380,19 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
         STDEVA = 0x016E,
         VARA = 0x016F,      
 
+        BAHTTEXT = 0x0170,
+        THAIDAYOFWEEK = 0x0171,
+        THAIDIGIT = 0x0172,
+        THAIMONTHOFYEAR = 0x0173,
+        THAINUMSOUND = 0x0174,
+        THAINUMSTRING = 0x0175,
+        THAISTRINGLENGTH = 0x0176,
+        ISTHAIDIGIT = 0x0177,
+        ROUNDBAHTDOWN = 0x0178,
+        ROUNDBAHTUP = 0x0179,
+        THAIYEAR = 0x017A,
+        RTD = 0x017B
+
    }
 
 }
