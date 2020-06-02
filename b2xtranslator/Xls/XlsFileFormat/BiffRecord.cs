@@ -268,6 +268,27 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
             return false;
         }
 
+        public T AsRecordType<T>()
+        {
+            byte[] recordBytes = this.GetBytes();
+            using (MemoryStream ms = new MemoryStream(recordBytes))
+            {
+                VirtualStreamReader vsr = new VirtualStreamReader(ms);
+                RecordType id = (RecordType) vsr.ReadUInt16();
+                ushort len = vsr.ReadUInt16();
+                var typeConstructor = typeof(T).GetConstructor(new Type[]
+                    {typeof(IStreamReader), typeof(RecordType), typeof(ushort)});
+
+                if (typeConstructor == null)
+                {
+                    throw new ArgumentException(string.Format("Could not find appropriate constructor for type {0}",
+                        typeof(T).FullName));
+                }
+
+                return (T) typeConstructor.Invoke(new object[] {vsr, id, len});
+            }
+        }
+
         public override int GetHashCode()
         {
             return GetBytes().GetHashCode();

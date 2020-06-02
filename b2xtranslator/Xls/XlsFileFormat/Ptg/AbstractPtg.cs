@@ -22,11 +22,12 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
         protected uint popSize;
         protected PtgType type;
         public PtgDataType dataType;
+        public bool fPtgNumberHighBit = false;
 
         protected byte[] RawBytes = null;
 
 
-        public AbstractPtg(PtgNumber ptgid, PtgDataType dt = PtgDataType.REFERENCE)
+        public AbstractPtg(PtgNumber ptgid, PtgDataType dt = PtgDataType.REFERENCE, bool fPtgNumberHighBit = false)
         {
             if ((int)ptgid > 0x5D)
             {
@@ -44,6 +45,9 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
                 this.dataType = dt;
                 this._id = ptgid;
             }
+
+            //Looks like whenever this is true the formula is corrupted, probably worth ignoring
+            this.fPtgNumberHighBit = fPtgNumberHighBit;
 
             this.data = "";
         }

@@ -262,6 +262,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
         FREQUENCY = 0x00FC,
         ADD_TOOLBAR = 0x00FD,
         DELETE_TOOLBAR = 0x00FE,
+        USERDEFINEDFUNCTION = 0x00FF,
         RESET_TOOLBAR = 0x0100,
         EVALUATE = 0x0101,
         GET_TOOLBAR = 0x0102,

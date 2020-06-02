@@ -7,6 +7,14 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
     {
         public const PtgNumber ID = PtgNumber.PtgMissArg;
 
+        public PtgMissArg(): base(PtgNumber.PtgMissArg, PtgDataType.VALUE)
+        {
+            this.Length = 1;
+            this.Data = " ";
+            this.type = PtgType.Operand;
+            this.popSize = 1;
+        }
+
         public PtgMissArg(IStreamReader reader, PtgNumber ptgid)
             :
             base(reader, ptgid)

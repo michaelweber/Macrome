@@ -134,5 +134,18 @@ namespace UnitTests
                 return wbBytes;
             }
         }
+
+        public static WorkbookStream GetMacroLoopWorkbookStream()
+        {
+            string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\macro-loop.xls";
+            using (var fs = new FileStream(template, FileMode.Open))
+            {
+                StructuredStorageReader ssr = new StructuredStorageReader(fs);
+                var wbStream = ssr.GetStream("Workbook");
+                byte[] wbBytes = new byte[wbStream.Length];
+                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                return new WorkbookStream(wbBytes);
+            }
+        }
     }
 }

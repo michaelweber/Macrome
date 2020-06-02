@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using b2xtranslator.Spreadsheet.XlsFileFormat.DataContainer;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.Tools;
@@ -158,7 +159,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             this.boolValueSet = false;
 
             long oldStreamPosition = this.Reader.BaseStream.Position;
-            this.val = reader.ReadBytes(8); // read 8 bytes for the value of the formular            
+            this.val = reader.ReadBytes(8); // read 8 bytes for the value of the formula            
             ProcessFormulaValue();
 
 
@@ -243,10 +244,23 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             }
         }
 
+        public string GetCellName(bool r1c1style = false)
+        {
+            string r1c1 = string.Format("R{0}C{1}", this.rw + 1, this.col + 1);
+            if (r1c1style) return r1c1;
+            return ExcelHelperClass.ConvertR1C1ToA1(r1c1);
+        }
+
         public override string ToString()
         {
-            return "Formula at position: Row - " + this.rw.ToString() + " | Col - " + this.col.ToString();   
+            return string.Format("Formula[{0}]", GetCellName());   
         }
+
+        public string ToFormulaString(bool showAttributes = false)
+        {
+            return string.Format("Formula[{0}]", GetCellName()) + ": " + PtgHelper.GetFormulaString(ptgStack, showAttributes);
+        }
+
 
 
     }

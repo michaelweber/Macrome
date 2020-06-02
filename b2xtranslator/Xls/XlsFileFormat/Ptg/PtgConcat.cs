@@ -7,7 +7,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
     {
         public const PtgNumber ID = PtgNumber.PtgConcat;
 
-        public PtgConcat() : base(PtgNumber.PtgConcat)
+        public PtgConcat(bool setHighBit = false) : base(PtgNumber.PtgConcat, PtgDataType.REFERENCE, setHighBit)
         {
             this.Length = 1;
             this.Data = "&";

@@ -328,8 +328,11 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
                 bw.Write(this.Name.Bytes);
 
-                byte[] ptgBytes = PtgHelper.GetBytes(this.rgce);
-                bw.Write(ptgBytes);
+                if (this.rgce != null)
+                {
+                    byte[] ptgBytes = PtgHelper.GetBytes(this.rgce);
+                    bw.Write(ptgBytes);
+                }
                 return bw.GetBytesWritten();
             }
 
@@ -338,14 +341,24 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
         public override string ToString()
         {
+            string name = Name.Value;
+
+            if (fBuiltin)
+            {
+                string builtinName = ExcelHelperClass.getNameStringfromBuiltInFunctionID(Name.Value);
+
+                if (Name.Value.Length > 1) builtinName += new String(Name.Value.Skip(1).ToArray());
+                name = builtinName;
+            }
+
             return string.Format(
-                "Lbl (0x{0} bytes) - grbits: 0x{1} | fBuiltin: {2} | fHidden: {3} | fHighByte: {4} | Name: {5}",
+                "Lbl (0x{0} bytes) - flags: 0x{1} | fBuiltin: {2} | fHidden: {3} | Name [unicode={4}]: {5}",
                 Length.ToString("X"),
                 Flags.ToString("X"),
                 fBuiltin,
                 fHidden,
                 Name.fHighByte,
-                Name.Value);
+                name);
         }
     }
 }

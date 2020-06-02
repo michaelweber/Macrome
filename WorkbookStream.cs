@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
+using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Structures;
 using b2xtranslator.StructuredStorage.Reader;
+using b2xtranslator.xls.XlsFileFormat;
+using b2xtranslator.xls.XlsFileFormat.Records;
 
 namespace Macrome
 {
@@ -136,6 +139,21 @@ namespace Macrome
                 .Concat(_biffRecords.TakeLast(_biffRecords.Count - (replaceRecordOffset + 1))).ToList();
 
             return new WorkbookStream(newRecords);
+        }
+
+        public int GetLabelOffset(string labelName)
+        {
+            List<Lbl> labels = GetAllRecordsByType<Lbl>();
+
+            int offset = 1;
+            foreach (var label in labels)
+            {
+                if (label.Name.Equals(labelName)) return offset;
+
+                offset += 1;
+            }
+
+            throw new ArgumentException(string.Format("Cannot find Lbl record with name {0}", labelName));
         }
 
         public WorkbookStream AddSheet(BoundSheet8 sheetHeader, byte[] sheetBytes)
@@ -326,7 +344,7 @@ namespace Macrome
 
 
 
-        public override string ToString()
+        public string ToDisplayString()
         {
             return string.Join("\n",_biffRecords.Select(record => record.ToHexDumpString()));
         }

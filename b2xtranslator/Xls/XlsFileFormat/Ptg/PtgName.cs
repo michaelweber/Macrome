@@ -8,6 +8,18 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
         public const PtgNumber ID = PtgNumber.PtgName;
 
         public int nameindex;
+        public string nameValue;
+
+        public PtgName(int nameIndex, string nameValue = null) : base(PtgNumber.PtgName)
+        {
+            this.Length = 5;
+            this.Data = "";
+            this.type = PtgType.Operator;
+            this.popSize = 1;
+
+            this.nameindex = nameIndex;
+            this.nameValue = nameValue;
+        }
 
         public PtgName(IStreamReader reader, PtgNumber ptgid)
             :

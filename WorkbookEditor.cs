@@ -13,8 +13,17 @@ using b2xtranslator.xls.XlsFileFormat.Structures;
 
 namespace Macrome
 {
+    public enum SheetPackingMethod
+    {
+        ObfuscatedCharFunc,
+        ObfuscatedCharFuncAlt,
+        CharSubroutine
+    }
+
     public class WorkbookEditor
     {
+        
+
         public WorkbookStream WbStream;
 
         public WorkbookEditor(byte[] workbookBytes)
@@ -119,11 +128,11 @@ namespace Macrome
         }
 
         public WorkbookStream SetMacroBinaryContent(byte[] payload, int rwStart, int colStart, int dstRwStart,
-            int dstColStart)
+            int dstColStart, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             List<string> payloadMacros = FormulaHelper.BuildPayloadMacros(payload);
             List<BiffRecord> formulasToAdd = new List<BiffRecord>();
-            formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payloadMacros, rwStart, colStart, dstRwStart, dstColStart));
+            formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payloadMacros, rwStart, colStart, dstRwStart, dstColStart, 15, packingMethod));
 
             WorkbookStream macroStream = GetMacroStream();
             try
@@ -133,21 +142,30 @@ namespace Macrome
                 WbStream = modifiedStream;
                 return modifiedStream;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new ArgumentException(
                     "SetMacroBinaryContent must be called on a stream with at least 1 existing Formula Record");
             }
         }
 
-        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, int dstRwStart = 0, int dstColStart = 0)
+        public WorkbookStream AddFormula(Formula formula)
+        {
+            Formula lastFormula = WbStream.GetAllRecordsByType<Formula>().Last();
+            WbStream = WbStream.InsertRecord(formula, lastFormula);
+            WbStream = WbStream.FixBoundSheetOffsets();
+            return WbStream;
+        }
+
+        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, int dstRwStart = 0, int dstColStart = 0, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             WorkbookStream macroStream = GetMacroStream();
 
             //The macro sheet template contains a single formula record to replace
             Formula replaceMeFormula = macroStream.GetAllRecordsByType<Formula>().First();
-            
-            List<BiffRecord> formulasToAdd = FormulaHelper.ConvertStringsToRecords(macroStrings, rwStart, colStart, dstRwStart, dstColStart);
+
+            //ixfe default cell value is 15
+            List<BiffRecord> formulasToAdd = FormulaHelper.ConvertStringsToRecords(macroStrings, rwStart, colStart, dstRwStart, dstColStart, 15, packingMethod);
 
             int lastGotoCol = formulasToAdd.Last().AsRecordType<Formula>().col;
             int lastGotoRow = formulasToAdd.Last().AsRecordType<Formula>().rw + 1;
@@ -160,7 +178,23 @@ namespace Macrome
             return WbStream;
         }
 
-        public WorkbookStream AddLabel(string label, Stack<AbstractPtg> rgce, bool isMacroStack = false)
+        private WorkbookStream InitializeGlobalStreamLabels()
+        {
+            List<BoundSheet8> sheets = WbStream.GetAllRecordsByType<BoundSheet8>();
+
+            BiffRecord lastCountryRecord = WbStream.GetAllRecordsByType<Country>().Last();
+
+            SupBook supBookRecord = new SupBook(sheets.Count, 0x401);
+            int macroOffset = sheets.TakeWhile(s => s.dt != BoundSheet8.SheetType.Macrosheet).Count();
+            ExternSheet externSheetRecord = new ExternSheet(1, new List<XTI>() { new XTI(0, macroOffset, macroOffset) });
+
+            WbStream = WbStream.InsertRecord(supBookRecord, lastCountryRecord);
+            WbStream = WbStream.InsertRecord(externSheetRecord, supBookRecord);
+
+            return WbStream;
+        }
+
+        public WorkbookStream AddLabel(string label, Stack<AbstractPtg> rgce, bool isHidden = false, bool isMacroStack = false)
         {
             /*
              * Labels require a reference to an XTI index which is used to say which
@@ -175,9 +209,9 @@ namespace Macrome
              * TODO handle existing SupBook/ExternSheet records when adding Lbl entries
              */
 
-            List<BoundSheet8> sheets = WbStream.GetAllRecordsByType<BoundSheet8>();
             List<SupBook> supBooksExisting = WbStream.GetAllRecordsByType<SupBook>();
             List<ExternSheet> externSheetsExisting = WbStream.GetAllRecordsByType<ExternSheet>();
+            List<Lbl> existingLbls = WbStream.GetAllRecordsByType<Lbl>();
 
             ExternSheet lastExternSheet;
 
@@ -187,15 +221,8 @@ namespace Macrome
             }
             else
             {
-                BiffRecord lastCountryRecord = WbStream.GetAllRecordsByType<Country>().Last();
-
-                SupBook supBookRecord = new SupBook(sheets.Count, 0x401);
-                int macroOffset = sheets.TakeWhile(s => s.dt != BoundSheet8.SheetType.Macrosheet).Count();
-                ExternSheet externSheetRecord = new ExternSheet(1, new List<XTI>() { new XTI(0, macroOffset, macroOffset) });
-
-                WbStream = WbStream.InsertRecord(supBookRecord, lastCountryRecord);
-                WbStream = WbStream.InsertRecord(externSheetRecord, supBookRecord);
-                lastExternSheet = externSheetRecord;
+                InitializeGlobalStreamLabels();
+                lastExternSheet = WbStream.GetAllRecordsByType<ExternSheet>().Last(); ;
             }
 
             Lbl newLbl = new Lbl(label, 0);
@@ -205,20 +232,36 @@ namespace Macrome
                 newLbl.fProc = true;
                 newLbl.fFunc = true;
             }
-            
-            newLbl.SetRgce(rgce);
 
-            WbStream = WbStream.InsertRecord(newLbl, lastExternSheet);
+            if (isHidden) newLbl.fHidden = true;
+
+            if (rgce != null)
+            {
+                newLbl.SetRgce(rgce);
+            }
+            else
+            {
+                newLbl.cce = 0;
+            }
+
+            if (existingLbls.Count > 0)
+            {
+                WbStream = WbStream.InsertRecord(newLbl, existingLbls.Last());
+            }
+            else
+            {
+                WbStream = WbStream.InsertRecord(newLbl, lastExternSheet);
+            }
+
             WbStream = WbStream.FixBoundSheetOffsets();
-
             return WbStream;
         }
 
-        public WorkbookStream AddLabel(string label, int rw, int col)
+        public WorkbookStream AddLabel(string label, int rw, int col, bool isHidden = false)
         {
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
             ptgStack.Push(new PtgRef3d(rw, col, 0));
-            return AddLabel(label, ptgStack);
+            return AddLabel(label, ptgStack, isHidden);
         }
 
         /// <summary>

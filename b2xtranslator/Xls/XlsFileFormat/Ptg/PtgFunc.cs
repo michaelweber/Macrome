@@ -19,7 +19,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             }
         }
 
-        public PtgFunc(FtabValues fTab, PtgDataType dt = PtgDataType.REFERENCE) : base(PtgNumber.PtgFunc, dt)
+        public PtgFunc(FtabValues fTab, PtgDataType dt = PtgDataType.REFERENCE, bool setHighBit = false) : base(PtgNumber.PtgFunc, dt, setHighBit)
         {
             this.Data = "";
             this.Length = 3;

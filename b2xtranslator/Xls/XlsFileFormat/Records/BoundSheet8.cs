@@ -18,6 +18,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
     {
         public const RecordType ID = RecordType.BoundSheet8;
 
+        private byte Flags;
         public enum HiddenState : byte
         {
             /// <summary>
@@ -150,6 +151,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             this.lbPlyPos = this.Reader.ReadUInt32();
 
             byte flags = reader.ReadByte();
+            Flags = flags;
 
             // Bitmask is 0003h -> first two bits, but we can hide our hidden status by flipping reserved bits
             this.hsState = (HiddenState)Utils.BitmaskToByte(flags, 0x00FF);
@@ -192,11 +194,14 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         /// <returns>String from the object</returns>
         public override string ToString()
         {
-            string returnvalue = "BOUNDSHEET - RECORD: \n";
-            returnvalue += "-- Name: " + this.stName.Value + "\n";
-            returnvalue += "-- Offset: " + this.lbPlyPos + "\n";
-            returnvalue += "-- HiddenState: " + this.hsState + "\n";
-            returnvalue += "-- SheetType: " + this.dt + "\n"; 
+            string returnvalue = 
+                string.Format("BoundSheet8 (0x{0} bytes) - flags: 0x{1} | SheetType: {2} | HiddenState: {3} | Name [unicode={4}]: {5}",
+                    this.Length.ToString("X"),
+                    this.Flags.ToString("X"),
+                    this.dt.ToString(),
+                    this.hsState.ToString(),
+                    this.stName.fHighByte,
+                    this.stName.Value);
             return returnvalue; 
         }
     }

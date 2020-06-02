@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.StructuredStorage.Reader;
 
@@ -195,6 +196,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
                             case Ptg0x19Sub.PtgAttrSemi: ptg = new PtgAttrSemi(reader, ptgtype2); break;
                             case Ptg0x19Sub.PtgAttrChoose: ptg = new PtgAttrChoose(reader, ptgtype2); break;
                             case Ptg0x19Sub.PtgAttrSpace: ptg = new PtgAttrSpace(reader, ptgtype2); break;
+                            case Ptg0x19Sub.PtgAttrBaxcel1: ptg = new PtgAttrBaxcel(reader, ptgtype2, false); break;
+                            case Ptg0x19Sub.PtgAttrBaxcel2: ptg = new PtgAttrBaxcel(reader, ptgtype2, true); break;
                             case Ptg0x19Sub.PtgNotDocumented: ptg = new PtgNotDocumented(reader, ptgtype2); break;
                             default: break;
                         }
@@ -214,6 +217,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
                             case PtgNumber.PtgDiv: ptg = new PtgDiv(reader, ptgtype); break;
                             case PtgNumber.PtgParen: ptg = new PtgParen(reader, ptgtype); break;
                             case PtgNumber.PtgNum: ptg = new PtgNum(reader, ptgtype); break;
+                            case PtgNumber.PtgArray: ptg = new PtgArray(reader, ptgtype); break;
                             case PtgNumber.PtgRef: ptg = new PtgRef(reader, ptgtype); break;
                             case PtgNumber.PtgRefN: ptg = new PtgRefN(reader, ptgtype); break;
                             case PtgNumber.PtgPower: ptg = new PtgPower(reader, ptgtype); break;
@@ -425,6 +429,51 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
             return escapedString.Replace("\"\"","\"" )
                 .Replace("''","'");
 
+        }
+
+        private static int GetColNumberFromExcelA1ColName(string colName)
+        {
+            if (colName.Length == 1)
+            {
+                return (int)Convert.ToByte(colName[0]) - (int)'A' + 1;
+            }
+            else
+            {
+                return ((int)Convert.ToByte(colName[0]) - (int)'A' + 1) * 26 +
+                       ((int)Convert.ToByte(colName[1]) - (int)'A' + 1);
+            }
+        }
+        public static string ConvertA1ToR1C1(string a1)
+        {
+            string colString = new string(a1.TakeWhile(c => !Char.IsNumber(c)).ToArray());
+            int rowNum = Int32.Parse(new string(a1.TakeLast(a1.Length - colString.Length).ToArray()));
+            int colNum = GetColNumberFromExcelA1ColName(colString);
+            return string.Format("R{0}C{1}", rowNum, colNum);
+        }
+
+        private static string GetExcelA1ColNameFromColNumber(int colNumber)
+        {
+            if (colNumber <= 26)
+            {
+                char firstColLetter = (char)(colNumber + (int)'A' - 1);
+                return "" + firstColLetter;
+            }
+            else
+            {
+                char firstColLetter = (char)(colNumber % 26 + (int)'A' - 1);
+                char secondColLetter = (char)((colNumber / 26) + 'A' - 1);
+                return "" + secondColLetter + firstColLetter;
+            }
+        }
+
+        public static string ConvertR1C1ToA1(string r1c1)
+        {
+            string rowNumString = new string(r1c1.Skip(1).TakeWhile(c => Char.IsNumber(c)).ToArray());
+            int rowNum = Convert.ToInt32(rowNumString);
+            string colNumString = new string(r1c1.SkipWhile(c => c != 'C' && c != 'c').Skip(1).ToArray());
+            int colNum = Convert.ToInt32(colNumString);
+            string a1String = string.Format("{0}{1}", GetExcelA1ColNameFromColNumber(colNum), rowNum);
+            return a1String;
         }
     }
 }

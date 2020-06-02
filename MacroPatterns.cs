@@ -12,26 +12,6 @@ namespace Macrome
         public const string MacroColumnSeparator = ";;;;;";
         public const string DefaultVariableName = "šœƒ";
 
-        private static int GetColNumberFromExcelA1ColName(string colName)
-        {
-            if (colName.Length == 1)
-            {
-                return (int) Convert.ToByte(colName[0]) - (int) 'A' + 1;
-            }
-            else
-            {
-                return ((int)Convert.ToByte(colName[0]) - (int)'A' + 1) * 26 + 
-                       ((int)Convert.ToByte(colName[1]) - (int)'A' + 1);
-            }
-        }
-        private static string ConvertA1ToR1C1(string a1)
-        {
-            string colString = new string(a1.TakeWhile(c => !Char.IsNumber(c)).ToArray());
-            int rowNum = Int32.Parse(new string(a1.TakeLast(a1.Length - colString.Length).ToArray()));
-            int colNum = GetColNumberFromExcelA1ColName(colString);
-            return string.Format("R{0}C{1}", rowNum, colNum);
-        }
-
         //Excel variable names must start with a valid letter, then they can include numbers
         private static bool IsValidVariableNameCharacter(char c, bool allowNumbers = false)
         {
@@ -134,7 +114,7 @@ namespace Macrome
             foreach (var match in matches)
             {
                 string matchString = ((Match)match).Value;
-                string replaceContent = ConvertA1ToR1C1(matchString);
+                string replaceContent = ExcelHelperClass.ConvertA1ToR1C1(matchString);
                 //As we change the string, these indexes will go out of sync, track the size delta to make sure we resync positions
                 int matchIndex = ((Match)match).Index + stringLenChange;
 

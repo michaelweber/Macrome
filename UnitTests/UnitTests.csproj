@@ -32,6 +32,9 @@
     <None Update="TestDocs\combined-with-auto-open.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestDocs\macro-loop.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestDocs\macro-test.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -11,27 +11,7 @@ namespace Macrome
 {
     public static class BiffRecordExtensions
     {
-        public static T AsRecordType<T>(this BiffRecord record) where T : BiffRecord
-        {
-            byte[] recordBytes = record.GetBytes();
-            using (MemoryStream ms = new MemoryStream(recordBytes))
-            {
-                VirtualStreamReader vsr = new VirtualStreamReader(ms);
-                RecordType id = (RecordType)vsr.ReadUInt16();
-                ushort len = vsr.ReadUInt16();
-                var typeConstructor = typeof(T).GetConstructor(new Type[]
-                    {typeof(IStreamReader), typeof(RecordType), typeof(ushort)});
-
-                if (typeConstructor == null)
-                {
-                    throw new ArgumentException(string.Format("Could not find appropriate constructor for type {0}", typeof(T).FullName));
-                }
-
-                return (T)typeConstructor.Invoke(new object[] {vsr, id, len});
-            }
-        }
-
-        private static string HexDump(byte[] bytes, int bytesPerLine = 16)
+       private static string HexDump(byte[] bytes, int bytesPerLine = 16)
         {
             if (bytes == null) return "<null>";
             int bytesLength = bytes.Length;
@@ -93,16 +73,16 @@ namespace Macrome
             return result.ToString();
         }
 
-        public static string ToHexDumpString(this BiffRecord record, int maxLength = 0x10)
+        public static string ToHexDumpString(this BiffRecord record, int maxLength = 0x10, bool showAttrInfo = false)
         {
             string biffString = record.ToString();
             //Skip the 4 byte header
             byte[] bytes = record.GetBytes().Skip(4).ToArray();
             string hexDumpString = HexDump(bytes);
 
-            if (record.Id == RecordType.Formula)
+            if (record is Formula)
             {
-                biffString = record.AsRecordType<Formula>().ToString();
+                biffString = ((Formula)record).ToFormulaString(showAttrInfo);
             }
             else if (record.Id == RecordType.Dimensions)
             {
