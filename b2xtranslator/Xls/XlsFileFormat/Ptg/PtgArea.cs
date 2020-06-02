@@ -40,5 +40,13 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.type = PtgType.Operand;
             this.popSize = 1;
         }
+
+        public override string ToString()
+        {
+            string firstCell = ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", rwFirst + 1, (colFirst + 1) & 0xFF));
+            string secondCell = ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", rwLast + 1, (colLast + 1) & 0xFF));
+            return string.Format("{0}:{1}", firstCell, secondCell);
+
+        }
     }
 }

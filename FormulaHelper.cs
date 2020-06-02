@@ -339,7 +339,7 @@ namespace Macrome
         {
             switch (packingMethod)
             {
-                case SheetPackingMethod.ObfuscatedCharFunc:
+                case SheetPackingMethod.ObfuscatedCharFunc: 
                     return  GetObfuscatedCharPtgForInt(Convert.ToUInt16(c));
                 case SheetPackingMethod.ObfuscatedCharFuncAlt:
                     return GetCharPtgForInt(Convert.ToUInt16(c));

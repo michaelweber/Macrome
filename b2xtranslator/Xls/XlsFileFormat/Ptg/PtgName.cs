@@ -32,6 +32,18 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.popSize = 1;
             this.nameindex = this.Reader.ReadInt32(); 
         }
+
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(nameValue))
+            {
+                return string.Format("PtgName(nameindex:{0})", nameindex);
+            }
+            else
+            {
+                return nameValue;
+            }
+        }
     }
 }
 

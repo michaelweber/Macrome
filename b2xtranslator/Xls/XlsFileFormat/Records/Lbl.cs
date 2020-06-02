@@ -338,6 +338,29 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
         }
 
+        public bool IsAutoOpenLabel()
+        {
+            string normalizedName = "";
+
+            //Detect built-in AutoOpen labels as well
+            if (this.fBuiltin && this.Name.Bytes[1] == 0x01)
+            {
+                return true;
+            }
+
+            foreach (char c in this.Name.Value)
+            {
+                if ((int) c >= 0x20 && (int) c < 0x7F) normalizedName += c;
+            }
+
+            //Only looking for auto_ope since the last letter isn't necessary for Excel 
+            if (normalizedName.ToLowerInvariant().StartsWith("auto_ope"))
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         public override string ToString()
         {
@@ -351,7 +374,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                 name = builtinName;
             }
 
-            return string.Format(
+            string labelString = string.Format(
                 "Lbl (0x{0} bytes) - flags: 0x{1} | fBuiltin: {2} | fHidden: {3} | Name [unicode={4}]: {5}",
                 Length.ToString("X"),
                 Flags.ToString("X"),
@@ -359,6 +382,35 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                 fHidden,
                 Name.fHighByte,
                 name);
+
+            if (rgce != null && rgce.Count > 0)
+            {
+                string labelRgceContent = "";
+                
+                switch (rgce.First())
+                {
+                    //When we reference a different name
+                    case PtgName ptgName:
+                        labelRgceContent = ptgName.ToString();
+                        break;
+                    case PtgRef3d ptgRef3d:
+                        labelRgceContent = ptgRef3d.ToString();
+                        break;
+                    default:
+                        labelRgceContent = PtgHelper.GetFormulaString(rgce);
+                        break;
+                }
+
+                if (IsAutoOpenLabel())
+                {
+                    labelString += " !AUTO_OPEN!";
+                }
+
+                labelString += " | Formula: " + labelRgceContent;
+
+            }
+            
+            return labelString;
         }
     }
 }

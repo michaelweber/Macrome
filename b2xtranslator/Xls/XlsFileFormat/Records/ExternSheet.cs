@@ -64,13 +64,16 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
             rgXTI = new List<XTI>();
 
-            for (int i = 0; i < this.cXTI; i++)
+            int offset = 0;
+            //Sometimes cXTI is invalid - try to continue when that happens
+            for (int i = 2; i < Length; i+=6)
             {                
-                this.iSUPBOOK[i] = this.Reader.ReadUInt16();
-                this.itabFirst[i] = this.Reader.ReadUInt16();
-                this.itabLast[i] = this.Reader.ReadUInt16(); 
+                this.iSUPBOOK[offset] = this.Reader.ReadUInt16();
+                this.itabFirst[offset] = this.Reader.ReadUInt16();
+                this.itabLast[offset] = this.Reader.ReadUInt16(); 
 
-                rgXTI.Add(new XTI(this.iSUPBOOK[i], this.itabFirst[i], this.itabLast[i]));
+                rgXTI.Add(new XTI(this.iSUPBOOK[offset], this.itabFirst[offset], this.itabLast[offset]));
+                offset += 1;
             }
 
             // assert that the correct number of bytes has been read from the stream

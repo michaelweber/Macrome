@@ -43,5 +43,11 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.type = PtgType.Operand;
             this.popSize = 1;
         }
+
+        public override string ToString()
+        {
+            //Make sure to truncate column values that use any value > 255
+            return ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", rw + 1, (col + 1) & 0xFF));
+        }
     }
 }

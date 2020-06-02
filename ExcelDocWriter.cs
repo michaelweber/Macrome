@@ -15,6 +15,7 @@ namespace Macrome
         public void WriteDocument(string filePath, byte[] wbBytes)
         {
             CompoundFile cf = new CompoundFile();
+            //Can be Book or Workbook
             CFStream workbookStream = cf.RootStorage.AddStream("Workbook");
 
             workbookStream.Write(wbBytes, 0);

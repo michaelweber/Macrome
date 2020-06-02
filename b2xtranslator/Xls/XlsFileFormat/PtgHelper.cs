@@ -29,39 +29,94 @@ namespace b2xtranslator.xls.XlsFileFormat
             typeof(PtgAttrBaxcel)
         };
 
-        public static List<BiffRecord> UpdatePtgNameRecords(List<BiffRecord> records)
+        private static Stack<AbstractPtg> UpdateNameRecords(Stack<AbstractPtg> ptgStack, List<Lbl> labelRecords)
         {
-            List<Lbl> labelRecords = records.Where(r => r.Id == RecordType.Lbl).Select(r => r.AsRecordType<Lbl>()).ToList();
-
-            List<BiffRecord> updatedRecords = new List<BiffRecord>();
-            foreach (var record in records)
+            List<AbstractPtg> modifiedStack = new List<AbstractPtg>();
+            foreach (var ptg in ptgStack)
             {
-                if (record.Id != RecordType.Formula)
+                if (ptg is PtgName)
                 {
-                    updatedRecords.Add(record);
-                    continue;
+                    int index = (ptg as PtgName).nameindex;
+                    string matchingLabel = labelRecords[index - 1].Name.Value;
+                    modifiedStack.Add(new PtgName(index, matchingLabel));
                 }
-
-                Formula formulaRecord = record.AsRecordType<Formula>();
-                List<AbstractPtg> modifiedStack = new List<AbstractPtg>();
-                foreach (var ptg in formulaRecord.ptgStack)
+                else
                 {
-                    if (ptg is PtgName)
+                    modifiedStack.Add(ptg);
+                }
+            }
+            modifiedStack.Reverse();
+            return new Stack<AbstractPtg>(modifiedStack);
+        }
+
+        private static Stack<AbstractPtg> UpdateSheetReferences(Stack<AbstractPtg> ptgStack, List<BoundSheet8> sheetRecords, ExternSheet externSheetRecord)
+        {
+            List<AbstractPtg> modifiedStack = new List<AbstractPtg>();
+            foreach (var ptg in ptgStack)
+            {
+                if (ptg is PtgRef3d)
+                {
+                    PtgRef3d ref3d = (ptg as PtgRef3d);
+                    int index = ref3d.ixti;
+                    XTI relevantXti = externSheetRecord.rgXTI[index];
+                    //Make sure this isn't a sheet or workbook level reference
+                    if (relevantXti.itabFirst >= 0)
                     {
-                        int index = (ptg as PtgName).nameindex;
-                        string matchingLabel = labelRecords[index - 1].Name.Value;
-                        modifiedStack.Add(new PtgName(index, matchingLabel));
+                        BoundSheet8 relevantSheet = sheetRecords[relevantXti.itabFirst];
+                        string sheetName = relevantSheet.stName.Value;
+                        modifiedStack.Add(new PtgRef3d(ref3d.rw, ref3d.col, ref3d.ixti, ref3d.rwRelative, ref3d.colRelative, sheetName));
                     }
                     else
                     {
                         modifiedStack.Add(ptg);
                     }
                 }
+                else
+                {
+                    modifiedStack.Add(ptg);
+                }
+            }
+            modifiedStack.Reverse();
+            return new Stack<AbstractPtg>(modifiedStack);
+        }
 
-                modifiedStack.Reverse();
+        public static List<BiffRecord> UpdateGlobalsStreamReferences(List<BiffRecord> records)
+        {
+            List<Lbl> labelRecords = records.Where(r => r.Id == RecordType.Lbl).Select(r => r.AsRecordType<Lbl>()).ToList();
+            List<BoundSheet8> sheetRecords = records.Where(r => r.Id == RecordType.BoundSheet8).Select(r => r.AsRecordType<BoundSheet8>()).ToList();
+            //Incorrect way to do this, but works for simpler cases - just pull the first ExternSheet record in the XLS file.
+            BiffRecord firstExternSheet = records.FirstOrDefault(r => r.Id == RecordType.ExternSheet);
 
-                formulaRecord.SetCellParsedFormula(new CellParsedFormula(new Stack<AbstractPtg>(modifiedStack)));
-                updatedRecords.Add(formulaRecord);
+            List<BiffRecord> updatedRecords = new List<BiffRecord>();
+            foreach (var record in records)
+            {
+                switch (record)
+                {
+                    case Formula formulaRecord:
+                        Stack<AbstractPtg> modifiedFormulaStack = UpdateNameRecords(formulaRecord.ptgStack, labelRecords);
+                        if (firstExternSheet != null)
+                        {
+                            modifiedFormulaStack = UpdateSheetReferences(modifiedFormulaStack, sheetRecords,
+                                firstExternSheet.AsRecordType<ExternSheet>());
+                        }
+                        formulaRecord.SetCellParsedFormula(new CellParsedFormula(modifiedFormulaStack));
+                        updatedRecords.Add(formulaRecord);
+                        continue;
+                    case Lbl lblRecord:
+                        Stack<AbstractPtg> modifiedLabelStack = UpdateNameRecords(lblRecord.rgce, labelRecords);
+                        if (firstExternSheet != null)
+                        {
+                            modifiedLabelStack = UpdateSheetReferences(modifiedLabelStack, sheetRecords,
+                                firstExternSheet.AsRecordType<ExternSheet>());
+                        }
+                        lblRecord.SetRgce(modifiedLabelStack);
+                        updatedRecords.Add(lblRecord);
+                        continue;
+                    default:
+                        updatedRecords.Add(record);
+                        continue;
+                }
+
             }
             return updatedRecords;
         }
@@ -156,6 +211,9 @@ namespace b2xtranslator.xls.XlsFileFormat
                     bw.Write(ptgArea.colFirst);
                     bw.Write(ptgArea.colLast);
                     break;
+                case PtgErr ptgErr:
+                    bw.Write(ptgErr.Err);
+                    break;
                 case PtgAttrSum ptgAttrSum: //Start 0x19 ## Section
                 case PtgAttrSemi ptgAttrSemi:
                 case PtgAttrChoose ptgAttrChoose:
@@ -171,7 +229,6 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgAreaErr ptgAreaErr:
                 case PtgAreaErr3d ptgAreaErr3d:
                 case PtgMemFunc ptgMemFunc:
-                case PtgErr ptgErr:
                 default:
                     throw new NotImplementedException(string.Format("No byte conversion implemented for {0}", ptg));
             }
@@ -261,14 +318,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                                 return GetFormulaStringInner(ref ptgStack, 1, showAttributes);
                             }
                         case PtgName ptgName:
-                            if (string.IsNullOrEmpty(ptgName.nameValue))
-                            {
-                                return string.Format("PtgName(nameindex:{0})", ptgName.nameindex);
-                            }
-                            else
-                            {
-                                return ptgName.nameValue;
-                            }
+                            return ptgName.ToString();
                             
                         default:
                             //Special case for operators
@@ -291,13 +341,10 @@ namespace b2xtranslator.xls.XlsFileFormat
                 {
                     switch (nextPtg)
                     {
-                        case PtgRef ptgRef: 
-                            //Make sure to truncate column values that use any value > 255
-                            return ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", ptgRef.rw + 1, (ptgRef.col + 1) & 0xFF));
+                        case PtgRef ptgRef:
+                            return ptgRef.ToString();
                         case PtgArea ptgArea:
-                            string firstCell = ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", ptgArea.rwFirst + 1, (ptgArea.colFirst + 1) & 0xFF));
-                            string secondCell = ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", ptgArea.rwLast + 1, (ptgArea.colLast + 1) & 0xFF));
-                            return string.Format("{0}:{1}", firstCell, secondCell);
+                            return ptgArea.ToString();
                         case PtgStr ptgStr: return string.Format("\"{0}\"", ptgStr.getData());
                         default: return nextPtg.getData();
                     }

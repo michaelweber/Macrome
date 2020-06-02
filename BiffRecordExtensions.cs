@@ -90,7 +90,7 @@ namespace Macrome
             }
             else if (record.Id == RecordType.Lbl)
             {
-                biffString = record.AsRecordType<Lbl>().ToString();
+                biffString = ((Lbl)record).ToString();
             }
 
 

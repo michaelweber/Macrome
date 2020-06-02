@@ -54,7 +54,7 @@ namespace UnitTests
             List<BiffRecord> relevantRecords = wbs.Records.Where(rec => relevantTypes.Contains(rec.Id)).ToList();
             relevantRecords = RecordHelper.ConvertToSpecificRecords(relevantRecords);
 
-            relevantRecords = PtgHelper.UpdatePtgNameRecords(relevantRecords);
+            relevantRecords = PtgHelper.UpdateGlobalsStreamReferences(relevantRecords);
 
             List<string> results = relevantRecords.Select(r => r.ToHexDumpString()).ToList();
 

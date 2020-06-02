@@ -6,6 +6,7 @@ using b2xtranslator.Spreadsheet.XlsFileFormat;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Structures;
+using b2xtranslator.StructuredStorage.Common;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.xls.XlsFileFormat;
 using b2xtranslator.xls.XlsFileFormat.Records;
@@ -26,10 +27,29 @@ namespace Macrome
             using (var fs = new FileStream(filePath, FileMode.Open))
             {
                 StructuredStorageReader ssr = new StructuredStorageReader(fs);
-                var wbStream = ssr.GetStream("Workbook");
-                byte[] wbBytes = new byte[wbStream.Length];
-                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
-                _biffRecords = RecordHelper.ParseBiffStreamBytes(wbBytes);
+                try
+                {
+                    var wbStream = ssr.GetStream("Workbook");
+                    byte[] wbBytes = new byte[wbStream.Length];
+                    wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                    _biffRecords = RecordHelper.ParseBiffStreamBytes(wbBytes);
+                }
+                catch (StreamNotFoundException)
+                {
+                    var wbStream = ssr.GetStream("Book");
+                    Console.WriteLine("WARNING: Main stream is in a Book record indicating legacy Excel 5 BIFF format. This may not parse correctly.");
+
+                    byte[] wbBytes = new byte[wbStream.Length];
+                    wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                    try
+                    {
+                        _biffRecords = RecordHelper.ParseBiffStreamBytes(wbBytes);
+                    }
+                    catch (Exception)
+                    {
+                        throw new NotImplementedException("Error parsing Book stream: Macrome currently doesn't support the Excel 5 BIFF format.");
+                    }
+                }
             }
         }
 
@@ -256,20 +276,7 @@ namespace Macrome
             List<Lbl> autoOpenLabels = new List<Lbl>();
             foreach (var label in labels)
             {
-                string normalizedName = "";
-
-                //Detect built-in AutoOpen labels as well
-                if (label.fBuiltin && label.Name.Bytes[1] == 0x01)
-                {
-                    autoOpenLabels.Add(label);
-                }
-
-                foreach (char c in label.Name.Value)
-                {
-                    if ((int)c >= 0x20 && (int)c < 0x7F) normalizedName += c;
-                }
-                
-                if (normalizedName.ToLowerInvariant().StartsWith("auto_open"))
+                if (label.IsAutoOpenLabel())
                 {
                     autoOpenLabels.Add(label);
                 }

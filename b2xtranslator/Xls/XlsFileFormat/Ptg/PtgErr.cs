@@ -7,15 +7,17 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
     {
         public const PtgNumber ID = PtgNumber.PtgErr;
 
+        public byte Err;
+
         public PtgErr(IStreamReader reader, PtgNumber ptgid)
             : base(reader, ptgid)
         {
             Debug.Assert(this.Id == ID);
             this.Length = 2;
 
-            byte err = reader.ReadByte();
+            this.Err = reader.ReadByte();
             this.Data = "";
-            switch (err)
+            switch (Err)
             {
                 case 0x00:
                     this.Data = "#NULL!";

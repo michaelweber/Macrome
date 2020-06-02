@@ -32,7 +32,7 @@ namespace Macrome
         }
 
         /// <summary>
-        /// Iterate through every BIFF Record and Dump it
+        /// Dumps information about BIFF records that are relevant for analysis. Defaults to sheet, label, and formula data.
         /// </summary>
         /// <param name="path">Path to the XLS file to dump</param>
         /// <param name="dumpAll">Dump all BIFF records, not the most commonly used by maldocs</param>
@@ -58,7 +58,10 @@ namespace Macrome
                 {
                     RecordType.BoundSheet8, //Sheet definitions (Defines macro sheets + hides them)
                     RecordType.Lbl,         //Named Cells (Contains Auto_Start) 
-                    RecordType.Formula      //The meat of most cell content
+                    RecordType.Formula,     //The meat of most cell content
+                    //Because we automagically look up the PtgRef3d sheet names, we don't need these
+                    //RecordType.SupBook,     //Contains information for cross-sheet references
+                    //RecordType.ExternSheet  //Contains the XTI records mapping ixti values to BoundSheet8
                 };
 
             int numBytesToDump = 0;
@@ -66,25 +69,25 @@ namespace Macrome
 
             if (dumpAll)
             {
-                WorkbookStream fullStream = new WorkbookStream(PtgHelper.UpdatePtgNameRecords(wbs.Records));
+                WorkbookStream fullStream = new WorkbookStream(PtgHelper.UpdateGlobalsStreamReferences(wbs.Records));
                 foreach (var record in fullStream.Records)
                 {
                     Console.WriteLine(record.ToHexDumpString(numBytesToDump, showAttrInfo));
                 }
-
             }
             else
             {
                 List<BiffRecord> relevantRecords = wbs.Records.Where(rec => relevantTypes.Contains(rec.Id)).ToList();
                 relevantRecords = RecordHelper.ConvertToSpecificRecords(relevantRecords);
 
-                relevantRecords = PtgHelper.UpdatePtgNameRecords(relevantRecords);
+                relevantRecords = PtgHelper.UpdateGlobalsStreamReferences(relevantRecords);
                 foreach (var record in relevantRecords)
                 {
-                    Console.WriteLine(record.ToHexDumpString(numBytesToDump, showAttrInfo));
+                    string dumpString = "";
+                    dumpString += record.ToHexDumpString(numBytesToDump, showAttrInfo);
+                    Console.WriteLine(dumpString);
                 }
             }
-
         }
 
         /// <summary>
