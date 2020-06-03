@@ -331,7 +331,7 @@ namespace Macrome
             string x64CellStart = string.Format("R{0}C1", offset + 15);    //A16
             string variableName = DefaultVariableName; 
             string x86PayloadCellStart = "R1C2";  //B1
-            string x64PayloadCellStart = "R1C2";  //C1
+            string x64PayloadCellStart = "R1C3";  //C1
             string rowsWrittenCell = "R1C4";      //D1
             string lengthOfCurrentCell = "R2C4";  //D2
             //Happens to be the same cell right now
