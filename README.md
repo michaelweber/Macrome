@@ -18,7 +18,9 @@ cd bin/Debug/netcoreapp2.0
 dotnet Macrome.dll deobfuscate --path obfuscated_document.xls
 ~~~
 
-Note that a 2.x build of dotnet is required for this to work as configured - one can be grabbed from  https://dotnet.microsoft.com/download/dotnet-core/2.1.
+Note that a 2.x and a 3.x build of dotnet is required for this to work as configured - they can be grabbed from  https://dotnet.microsoft.com/download/dotnet-core/2.1 and https://dotnet.microsoft.com/download/dotnet-core/3.1 respectively.
+
+Binary releases of the tool that do not require dotnet and contain an executable binary can be found in the Release section for Windows, OSX, and Linux.
 
 # Usage
 Run Macrome by either using `dotnet run` from the solution directory, or `dotnet` against the built Macrome binary. There are two modes of operation for Macrome - Build mode and Deobfuscation mode. 
@@ -34,15 +36,29 @@ First generate a base "decoy" Excel document that will contain content users sho
 Next, generate a shellcode payload to provide to the tool. The example binary payload (which pops calc) was generated using `msfvenom` using the following parameters:
 
 ~~~
- msfvenom -a x86 --platform windows -p windows/exec cmd=calc.exe -e x86/alpha_mixed -f raw EXITFUNC=thread > popcalc.bin
+ msfvenom -a x86 -b '\x00' --platform windows -p windows/exec cmd=calc.exe -e x86/alpha_mixed -f raw EXITFUNC=thread > popcalc.bin
 ~~~
 
 Note that using a majority alpha-numeric payload will reduce the size of the macro file generated since it's easier to express letters and numbers in macro form instead of appending `CHAR` function invocations repeatedly like `=CHAR(123)&CHAR(124)&CHAR(125)...` etc. But the tool should be able to handle a completely unprintable binary payload as well.
 
-Currently this will only work with `x86` payloads, but `x64` support is coming soon, along with support for loading .NET binaries.
+As of the Macrome 0.2.0, x64 payloads can also be used with documents. The example 64-bit payload, `popcalc64.bin`, was generated using the command:
+
+~~~
+msfvenom -a x64 -b '\x00' --platform windows -p windows/x64/exec cmd=calc.exe -e x64/xor -f raw EXITFUNC=thread > popcalc64.bin
+~~~
+
+This payload can then be embedded by executing the command:
+
+~~~
+dotnet Macrome.dll build --decoy-document decoy_document.xls --payload popcalc.bin --payload64-bit popcalc64.bin
+~~~
+
+Currently 64-bit payloads will require that an x86 payload is also provided. If this isn't an issue, you can just specify garbage for the x86 payload flag.
+
+There is eventual support for embedding .NET assemblies directly in the document, but if you want to do that right now I'd suggest using [EXCELntDonut](https://github.com/FortyNorthSecurity/EXCELntDonut/).
 
 ### Macro Payload Usage
-Similar to binary payload usage, a decoy document must first be generated. Next, a text file containing the macros to run should be created. Macros should be separated by newline characters and will be written to column B starting with row 1. A basic example macro is provided in `/Docs/macro_example.txt`.
+Similar to binary payload usage, a decoy document must first be generated. Next, a text file containing the macros to run should be created. Macros should have columns separated by `;` characters and rows separated by newlines. Currently the content of macros specified will be written and executed beginning at A1 - though future support will be added to allow specifying the start location. Example macros can be found in `/Docs/macro_example.txt` and `/Docs/multi_column_macro_example.txt`.
 
 Finally run the command:
 
@@ -51,6 +67,19 @@ dotnet Macrome.dll build --decoy-document decoy_document.xls --payload macro-exa
 ~~~
 
 Note the usage of the `payload-type` flag set to `Macro`. 
+
+You can generate a macro yourself, or you can use the wonderful [EXCELntDonut](https://github.com/FortyNorthSecurity/EXCELntDonut/) tool to create a macro for you.
+
+## Dump Mode
+Run Macrome with the `dump` command to print the most relevant BIFF8 records for arbitrary documents. This functionality is similar to [olevba](https://github.com/decalage2/oletools/wiki/olevba)'s macro dumping functionality, but it has some more complete processing of edge-case Ptg entries to help make sure that the format is as close to Excel's actual FORMULA entries as possible. This is what I've been using to debug some of the weird edge case documents I've been generating while making this tool, so it's comparably robust. I'm sure there's tons of edge cases that are not supported right now though, so if you find a document that it doesn't properly dump the content of, please open an issue and share the document as a zip file.
+
+The dump command only requires a `path` argument pointing at the target file. An example invocation is:
+
+~~~
+dotnet Macrome.dll dump --path docToDump.xls
+~~~
+
+Most of the flags that the `dump` command are for debugging, but the `dump-hex-bytes` may be useful for users who want to see the individual byte payloads for relevant records. This is similar functionality of [BiffView](https://www.aldeid.com/wiki/BiffView), though only maldoc specific entries will be displayed by default.
 
 ## Deobfuscate Mode
 Run Macrome with the `deobfuscate` command to take an obfuscated XLS Binary document and attempt to reverse several anti-analysis behaviors. `dotnet Macrome.dll deobfuscate -h` will display full usage instructions. Currently, by default this mode will:
