@@ -228,7 +228,7 @@ namespace Macrome
 
                 if (binary64Payload != null && binary64Payload.Length > 0)
                 {
-                    wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 2, method);
+                    wbe.SetMacroBinaryContent(binary64Payload, curRw, curCol, dstRwStart, dstColStart + 2, method);
                     curRw = wbe.WbStream.GetFirstEmptyRowInColumn(colStart) + 1;
 
                     if (rwStart > 0xE000)

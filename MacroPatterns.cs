@@ -368,7 +368,7 @@ namespace Macrome
                 string.Format("=SET.VALUE({0},0)", rowsWrittenCell),
                 string.Format("=WHILE({0}<>\"END\")", variableName),
                 string.Format("=SET.VALUE({0},LEN({1}))", lengthOfCurrentCell, variableName),
-                string.Format("=RTL({0}+({1}*10),{2},LEN({2}))", x64AllocatedMemoryBase, rowsWrittenCell, variableName),
+                string.Format("=RTL({0}+({1}*255),{2},LEN({2}))", x64AllocatedMemoryBase, rowsWrittenCell, variableName),
                 string.Format("=SET.VALUE({0},{0}+1)",rowsWrittenCell),
                 string.Format("{0}=ABSREF(\"R[1]C\",{0})", variableName),
                 "=NEXT()",
