@@ -23,7 +23,7 @@ Note that a 2.x and a 3.x build of dotnet is required for this to work as config
 Binary releases of the tool that do not require dotnet and contain an executable binary can be found in the Release section for Windows, OSX, and Linux.
 
 # Usage
-Run Macrome by either using `dotnet run` from the solution directory, or `dotnet` against the built Macrome binary. There are two modes of operation for Macrome - Build mode and Deobfuscation mode. 
+Run Macrome by either using `dotnet run` from the solution directory, or `dotnet` against the built Macrome binary. There are three modes of operation for Macrome - Build mode, Dump mode, and Deobfuscation mode. 
 
 ## Build Mode
 Run Macrome with the `build` command in order to generate an Excel document containing an obfuscated macro sheet using a provided decoy document and macro payload. `dotnet Macrome.dll build -h` will display full usage instructions.
@@ -69,6 +69,18 @@ dotnet Macrome.dll build --decoy-document decoy_document.xls --payload macro-exa
 Note the usage of the `payload-type` flag set to `Macro`. 
 
 You can generate a macro yourself, or you can use the wonderful [EXCELntDonut](https://github.com/FortyNorthSecurity/EXCELntDonut/) tool to create a macro for you.
+
+### Encoding Method Selection
+These will be detailed in an upcoming blog post, but Macrome can now encode macro payloads in three different ways. Most of these are still undetected by any AV - but experiment with your payloads to see what works best.
+1. *CharSubroutine* - Replaces the use of repeated CHAR() functions by creating a subroutine at a random cell, and then invoking it by using a long chain of `IF` and `SET.NAME` functions. This is something that hasn't been abused by prominent maldoc authors yet, so it's unlikely to ping on AV for now. 
+2. *ObfuscatedCharFunc* - The original Macrome encoding function. Invoke CHAR() but append it to a random empty cell and wrap the value in a `ROUND` function. 
+3. *ObfuscatedCharFuncAlt* - A slight variation on the original encoding, instead of using a PtgFunc to invoke CHAR, we use a PtgFuncVar - this breaks most signatures that try to count CHAR invocations. 
+
+Specify an encoding by using the `method` flag when building - for example, to use the *CharSubroutine* encoder:
+
+```
+dotnet Macrome.dll b --decoy-document decoy_document.xls --method CharSubroutine --payload popcalc.bin --output-file-name CharSubroutine-Macro.xls
+```
 
 ## Dump Mode
 Run Macrome with the `dump` command to print the most relevant BIFF8 records for arbitrary documents. This functionality is similar to [olevba](https://github.com/decalage2/oletools/wiki/olevba)'s macro dumping functionality, but it has some more complete processing of edge-case Ptg entries to help make sure that the format is as close to Excel's actual FORMULA entries as possible. This is what I've been using to debug some of the weird edge case documents I've been generating while making this tool, so it's comparably robust. I'm sure there's tons of edge cases that are not supported right now though, so if you find a document that it doesn't properly dump the content of, please open an issue and share the document as a zip file.
