@@ -194,7 +194,7 @@ namespace Macrome
             return WbStream;
         }
 
-        public WorkbookStream AddLabel(string label, Stack<AbstractPtg> rgce, bool isHidden = false, bool isMacroStack = false)
+        public WorkbookStream AddLabel(string label, Stack<AbstractPtg> rgce, bool isHidden = false, bool isUnicode = false, bool isMacroStack = false)
         {
             /*
              * Labels require a reference to an XTI index which is used to say which
@@ -227,6 +227,11 @@ namespace Macrome
 
             Lbl newLbl = new Lbl(label, 0);
 
+            if (isUnicode)
+            {
+                newLbl.SetName(new XLUnicodeStringNoCch(label, true));
+            }
+
             if (isMacroStack)
             {
                 newLbl.fProc = true;
@@ -257,11 +262,11 @@ namespace Macrome
             return WbStream;
         }
 
-        public WorkbookStream AddLabel(string label, int rw, int col, bool isHidden = false)
+        public WorkbookStream AddLabel(string label, int rw, int col, bool isHidden = false, bool isUnicode = false)
         {
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
             ptgStack.Push(new PtgRef3d(rw, col, 0));
-            return AddLabel(label, ptgStack, isHidden);
+            return AddLabel(label, ptgStack, isHidden, isUnicode);
         }
 
         /// <summary>

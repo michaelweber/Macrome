@@ -7,7 +7,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
     {
         public const Ptg0x19Sub ID = Ptg0x19Sub.PtgAttrGoto;
 
-        public ushort Offset;
+        public ushort PtgOffset;
 
         public PtgAttrGoto(IStreamReader reader, Ptg0x19Sub ptgid)
             :
@@ -18,7 +18,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.Data = "Goto";
             this.type = PtgType.Operator;
             this.popSize = 1;
-            Offset = this.Reader.ReadUInt16();
+            PtgOffset = this.Reader.ReadUInt16();
         }
     }
 }

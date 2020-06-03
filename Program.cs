@@ -59,9 +59,8 @@ namespace Macrome
                     RecordType.BoundSheet8, //Sheet definitions (Defines macro sheets + hides them)
                     RecordType.Lbl,         //Named Cells (Contains Auto_Start) 
                     RecordType.Formula,     //The meat of most cell content
-                    //Because we automagically look up the PtgRef3d sheet names, we don't need these
-                    //RecordType.SupBook,     //Contains information for cross-sheet references
-                    //RecordType.ExternSheet  //Contains the XTI records mapping ixti values to BoundSheet8
+                    RecordType.SupBook,     //Contains information for cross-sheet references
+                    RecordType.ExternSheet  //Contains the XTI records mapping ixti values to BoundSheet8
                 };
 
             int numBytesToDump = 0;
@@ -243,16 +242,18 @@ namespace Macrome
             }
             wbe.SetMacroSheetContent(macros, curRw,curCol, dstRwStart, dstColStart, method);
 
-            ushort charInvocationRw = 0xefff;
-            ushort charInvocationCol = 0x9f;
-            wbe.AddLabel("InvokeChar", charInvocationRw, charInvocationCol, true);
-            wbe.AddLabel("var", null, true);
+            if (method == SheetPackingMethod.CharSubroutine)
+            {
+                ushort charInvocationRw = 0xefff;
+                ushort charInvocationCol = 0x9f;
+                wbe.AddLabel("\u0000", charInvocationRw, charInvocationCol, true, true);
+                wbe.AddLabel("\u0000\u0000\u0000\u0000\u0000\u0000var", null, true, true);
+                //Using lblIndex 2, since that what var has set for us
+                wbe.AddFormula(
+                    FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));
+            }
+
             wbe.AddLabel("Auto_Open", rwStart, colStart);
-
-            //Using lblIndex 2, since that what var has set for us
-            wbe.AddFormula(
-                FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));
-
 
             wbe.ObfuscateAutoOpen();
 

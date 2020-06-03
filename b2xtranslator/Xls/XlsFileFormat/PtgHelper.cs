@@ -241,118 +241,112 @@ namespace b2xtranslator.xls.XlsFileFormat
             Stack<string> args = new Stack<string>();
             for (int param = 0; param < numArgs; param += 1)
             {
-                args.Push(GetFormulaStringInner(ref ptgStack, 1, showAttributes));
+                args.Push(GetFormulaStringInner(ref ptgStack, showAttributes));
             }
 
             return args.ToList();
         }
 
-        private static string GetFormulaStringInner(ref Stack<AbstractPtg> ptgStack, uint argsToPop, bool showAttributes = false)
+        private static string GetFormulaStringInner(ref Stack<AbstractPtg> ptgStack, bool showAttributes = false)
         {
+            AbstractPtg nextPtg = ptgStack.Pop();
 
-            for (int i = 0; i < argsToPop; i += 1)
+            if (nextPtg.OpType() == PtgType.Operator)
             {
-                AbstractPtg nextPtg = ptgStack.Pop();
-
-                if (nextPtg.OpType() == PtgType.Operator)
+                uint popSize = nextPtg.PopSize();
+                switch (nextPtg)
                 {
-                    uint popSize = nextPtg.PopSize();
-                    switch (nextPtg)
-                    {
-                        case PtgFunc ptgFunc:
-                            int numParams = PtgFunc.GetParamCountFromFtabValue(ptgFunc.Ftab);
-                            string formulaString = ptgFunc.Ftab.ToString().Replace('_', '.') + "(";
-                            List<string> args = GetFormulaStringFunctionArgs(ref ptgStack, numParams, showAttributes);
-                            formulaString += string.Join(",", args);
-                            formulaString += ")";
-                            return formulaString;
-                        case PtgFuncVar ptgFuncVar:
-                            string formulaVariableString = "";
-                            if (ptgFuncVar.fCelFunc) formulaVariableString += ptgFuncVar.Cetab.ToString().Replace('_','.');
-                            else formulaVariableString += ptgFuncVar.Ftab.ToString().Replace('_', '.');
+                    case PtgFunc ptgFunc:
+                        int numParams = PtgFunc.GetParamCountFromFtabValue(ptgFunc.Ftab);
+                        string formulaString = ptgFunc.Ftab.ToString().Replace('_', '.') + "(";
+                        List<string> args = GetFormulaStringFunctionArgs(ref ptgStack, numParams, showAttributes);
+                        formulaString += string.Join(",", args);
+                        formulaString += ")";
+                        return formulaString;
+                    case PtgFuncVar ptgFuncVar:
+                        string formulaVariableString = "";
+                        if (ptgFuncVar.fCelFunc) formulaVariableString += ptgFuncVar.Cetab.ToString().Replace('_','.');
+                        else formulaVariableString += ptgFuncVar.Ftab.ToString().Replace('_', '.');
 
-                            //Handle special case for user defined function invocation
-                            if (formulaVariableString.Equals(FtabValues.USERDEFINEDFUNCTION.ToString()))
-                            {
-                                //Pop the args off first, then we can retrieve the function name
-                                List<string> varArgs = GetFormulaStringFunctionArgs(ref ptgStack, ptgFuncVar.cparams - 1, showAttributes);
-                                //This should be a PtgName entry
-                                formulaVariableString = GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                                formulaVariableString += "(";
-                                formulaVariableString += string.Join(",", varArgs);
-                                formulaVariableString += ")";
-                            }
-                            else
-                            {
-                                formulaVariableString += "(";
-                                List<string> varArgs = GetFormulaStringFunctionArgs(ref ptgStack, ptgFuncVar.cparams, showAttributes);
-                                formulaVariableString += string.Join(",", varArgs);
-                                formulaVariableString += ")";
-                            }
-                            return formulaVariableString;
-                        case PtgAttrBaxcel attrBaxcel:
-                            if (showAttributes)
-                            {
-                                return string.Format("[AttrBaxcel:{0}]", attrBaxcel.DataBytes) + GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                            }
-                            else
-                            {
-                                return GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                            }
-                        case PtgAttrGoto attrGoto:
-                            if (showAttributes)
-                            {
-                                return string.Format("[AttrGoto:{0}]", attrGoto.Offset) + GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                            }
-                            else
-                            {
-                                return GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                            }
-                        case PtgAttrIf attrIf:
-                            if (showAttributes)
-                            {
-                                return string.Format("[AttrIf:{0}]", attrIf.Offset) + GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                            }
-                            else
-                            {
-                                return GetFormulaStringInner(ref ptgStack, 1, showAttributes);
-                            }
-                        case PtgName ptgName:
-                            return ptgName.ToString();
-                            
-                        default:
-                            //Special case for operators
-                            if (nextPtg is PtgParen)
-                            {
-                                return string.Format("({0})", GetFormulaStringInner(ref ptgStack, 1, showAttributes));
-                            }
-                            //If this is a simple operator like + or -
-                            if (nextPtg.getLength() == 1)
-                            {
-                                //We pop the arguments off the stack in reverse order, hence the 'backwards' ordering
-                                string formatString = "{2}{1}{0}";
-                                return string.Format(formatString, GetFormulaStringInner(ref ptgStack, 1, showAttributes),
-                                    nextPtg.getData(), GetFormulaStringInner(ref ptgStack, 1, showAttributes));
-                            }
-                            throw new NotImplementedException(string.Format("Ptg type {0} not implemented for ToString", nextPtg.Id));
-                    }
-                }
-                else
-                {
-                    switch (nextPtg)
-                    {
-                        case PtgRef ptgRef:
-                            return ptgRef.ToString();
-                        case PtgArea ptgArea:
-                            return ptgArea.ToString();
-                        case PtgStr ptgStr: return string.Format("\"{0}\"", ptgStr.getData());
-                        default: return nextPtg.getData();
-                    }
-                    
+                        //Handle special case for user defined function invocation
+                        if (formulaVariableString.Equals(FtabValues.USERDEFINEDFUNCTION.ToString()))
+                        {
+                            //Pop the args off first, then we can retrieve the function name
+                            List<string> varArgs = GetFormulaStringFunctionArgs(ref ptgStack, ptgFuncVar.cparams - 1, showAttributes);
+                            //This should be a PtgName entry
+                            formulaVariableString = GetFormulaStringInner(ref ptgStack, showAttributes);
+                            formulaVariableString += "(";
+                            formulaVariableString += string.Join(",", varArgs);
+                            formulaVariableString += ")";
+                        }
+                        else
+                        {
+                            formulaVariableString += "(";
+                            List<string> varArgs = GetFormulaStringFunctionArgs(ref ptgStack, ptgFuncVar.cparams, showAttributes);
+                            formulaVariableString += string.Join(",", varArgs);
+                            formulaVariableString += ")";
+                        }
+                        return formulaVariableString;
+                    case PtgAttrBaxcel attrBaxcel:
+                        if (showAttributes)
+                        {
+                            return string.Format("[AttrBaxcel:{0}]", attrBaxcel.DataBytes) + GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                        else
+                        {
+                            return GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                    case PtgAttrGoto attrGoto:
+                        if (showAttributes)
+                        {
+                            return string.Format("[AttrGoto:{0}]", attrGoto.PtgOffset) + GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                        else
+                        {
+                            return GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                    case PtgAttrIf attrIf:
+                        if (showAttributes)
+                        {
+                            return string.Format("[AttrIf:{0}]", attrIf.PtgOffset) + GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                        else
+                        {
+                            return GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                    case PtgName ptgName:
+                        return ptgName.ToString();
+                        
+                    default:
+                        //Special case for operators
+                        if (nextPtg is PtgParen)
+                        {
+                            return string.Format("({0})", GetFormulaStringInner(ref ptgStack, showAttributes));
+                        }
+                        //If this is a simple operator like + or -
+                        if (nextPtg.getLength() == 1)
+                        {
+                            //We pop the arguments off the stack in reverse order, hence the 'backwards' ordering
+                            string formatString = "{2}{1}{0}";
+                            return string.Format(formatString, GetFormulaStringInner(ref ptgStack, showAttributes),
+                                nextPtg.getData(), GetFormulaStringInner(ref ptgStack, showAttributes));
+                        }
+                        throw new NotImplementedException(string.Format("Ptg type {0} not implemented for ToString", nextPtg.Id));
                 }
             }
-
-            throw new NotImplementedException();
+            else
+            {
+                switch (nextPtg)
+                {
+                    case PtgRef ptgRef:
+                        return ptgRef.ToString();
+                    case PtgArea ptgArea:
+                        return ptgArea.ToString();
+                    case PtgStr ptgStr: return string.Format("\"{0}\"", ptgStr.getData());
+                    default: return nextPtg.getData();
+                }
+                
+            }
         }
 
 
@@ -360,7 +354,7 @@ namespace b2xtranslator.xls.XlsFileFormat
         {
             Stack<AbstractPtg> cloneStack = new Stack<AbstractPtg>(ptgStack.Reverse());
             string formulaString = "";
-            formulaString  = GetFormulaStringInner(ref cloneStack, 1, showAttributes);
+            formulaString  = GetFormulaStringInner(ref cloneStack, showAttributes);
 
             if (cloneStack.Count > 0)
             {
