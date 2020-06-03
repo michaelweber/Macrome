@@ -62,5 +62,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>popcalc.bin</TargetPath>
     </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Docs\popcalc64.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>popcalc64.bin</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
 </Project>
