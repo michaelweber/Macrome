@@ -160,8 +160,14 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
             this.stName = new ShortXLUnicodeString(reader);
 
+            if (this.Offset + this.Length != this.Reader.BaseStream.Position)
+            {
+                Console.WriteLine("BoundSheet8 Record is malformed - document probably has a password");
+                throw new Exception("BoundSheet8 Record is malformed - document probably has a password");
+            }
+
             // assert that the correct number of bytes has been read from the stream
-            Debug.Assert(this.Offset + this.Length == this.Reader.BaseStream.Position); 
+            Debug.Assert(this.Offset + this.Length == this.Reader.BaseStream.Position);
         }
 
         public override byte[] GetBytes()

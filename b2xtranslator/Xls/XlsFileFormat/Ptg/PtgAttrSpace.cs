@@ -6,7 +6,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
     public class PtgAttrSpace : AbstractPtg
     {
         public const Ptg0x19Sub ID = Ptg0x19Sub.PtgAttrSpace;
-
+        public byte[] PtgAttrSpaceType;
         public PtgAttrSpace(IStreamReader reader, Ptg0x19Sub ptgid)
             :
             base(reader, ptgid)
@@ -16,7 +16,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.Data = "Space";
             this.type = PtgType.Operator;
             this.popSize = 1;
-            this.Reader.ReadBytes(2);
+            this.PtgAttrSpaceType = this.Reader.ReadBytes(2);
         }
     }
 }

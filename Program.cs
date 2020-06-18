@@ -242,12 +242,18 @@ namespace Macrome
             }
             wbe.SetMacroSheetContent(macros, curRw,curCol, dstRwStart, dstColStart, method);
 
-            if (method == SheetPackingMethod.CharSubroutine)
+            if (method == SheetPackingMethod.CharSubroutine || method == SheetPackingMethod.AntiAnalysisCharSubroutine)
             {
                 ushort charInvocationRw = 0xefff;
                 ushort charInvocationCol = 0x9f;
                 wbe.AddLabel("\u0000", charInvocationRw, charInvocationCol, true, true);
-                wbe.AddLabel("\u0000\u0000\u0000\u0000\u0000\u0000var", null, true, true);
+
+                //Abuse a few comparison "features" in Excel
+                //1. Null bytes are ignored at the beginning and start of a label.
+                //2. Comparisons are not case sensitive, A vs a or Ḁ vs ḁ
+                //3. Unicode strings can be "decomposed" - ex: Ḁ (U+1E00) can become A (U+0041) - ◌̥ (U+0325)
+                //4. The Combining Grapheme Joiner (U+034F) unicode symbol is ignored at any location in the string in SET.NAME functions
+                wbe.AddLabel(UnicodeHelper.UnicodeArgumentLabel, null, true, true);
                 //Using lblIndex 2, since that what var has set for us
                 wbe.AddFormula(
                     FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));

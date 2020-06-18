@@ -17,7 +17,8 @@ namespace Macrome
     {
         ObfuscatedCharFunc,
         ObfuscatedCharFuncAlt,
-        CharSubroutine
+        CharSubroutine,
+        AntiAnalysisCharSubroutine
     }
 
     public class WorkbookEditor

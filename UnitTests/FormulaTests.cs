@@ -37,6 +37,27 @@ namespace UnitTests
             r1c1cell = "R100C161";
             Assert.AreEqual(a1cell, ExcelHelperClass.ConvertR1C1ToA1(r1c1cell));
             Assert.AreEqual(r1c1cell, ExcelHelperClass.ConvertA1ToR1C1(a1cell));
+
+            a1cell = "HZ46";
+            r1c1cell = "R46C234";
+            Assert.AreEqual(a1cell, ExcelHelperClass.ConvertR1C1ToA1(r1c1cell));
+            Assert.AreEqual(r1c1cell, ExcelHelperClass.ConvertA1ToR1C1(a1cell));
+
+            a1cell = "IU255";
+            r1c1cell = "R255C255";
+            Assert.AreEqual(a1cell, ExcelHelperClass.ConvertR1C1ToA1(r1c1cell));
+            Assert.AreEqual(r1c1cell, ExcelHelperClass.ConvertA1ToR1C1(a1cell));
+
+            a1cell = "AA1";
+            r1c1cell = "R1C27";
+            Assert.AreEqual(a1cell, ExcelHelperClass.ConvertR1C1ToA1(r1c1cell));
+            Assert.AreEqual(r1c1cell, ExcelHelperClass.ConvertA1ToR1C1(a1cell));
+
+            a1cell = "AZ1";
+            r1c1cell = "R1C52";
+            Assert.AreEqual(a1cell, ExcelHelperClass.ConvertR1C1ToA1(r1c1cell));
+            Assert.AreEqual(r1c1cell, ExcelHelperClass.ConvertA1ToR1C1(a1cell));
+
         }
 
         [Test]
