@@ -1,5 +1,5 @@
 # Macrome
-An Excel Macro Document Reader/Writer for Red Teamers & Analysts. A corresponding blog post describing what this tool actually does can be found [here](https://malware.pizza/2020/05/12/evading-av-with-excel-macros-and-biff8-xls/).
+An Excel Macro Document Reader/Writer for Red Teamers & Analysts. Blog posts describing what this tool actually does can be found [here](https://malware.pizza/2020/05/12/evading-av-with-excel-macros-and-biff8-xls/) and [here](https://malware.pizza/2020/06/18/further-evasion-in-the-forgotten-corners-of-ms-xls/).
 
 ![An example created document using the default template.](Docs/macrome.png)
 
@@ -75,6 +75,7 @@ These will be detailed in an upcoming blog post, but Macrome can now encode macr
 1. *CharSubroutine* - Replaces the use of repeated CHAR() functions by creating a subroutine at a random cell, and then invoking it by using a long chain of `IF` and `SET.NAME` functions. This is something that hasn't been abused by prominent maldoc authors yet, so it's unlikely to ping on AV for now. 
 2. *ObfuscatedCharFunc* - The original Macrome encoding function. Invoke CHAR() but append it to a random empty cell and wrap the value in a `ROUND` function. 
 3. *ObfuscatedCharFuncAlt* - A slight variation on the original encoding, instead of using a PtgFunc to invoke CHAR, we use a PtgFuncVar - this breaks most signatures that try to count CHAR invocations. 
+4. *AntiAnalysisCharSubroutine* - Same as *CharSubroutine* but variables being passed to the subroutine are obfuscated using Unicode shenanigans as described [here](https://malware.pizza/2020/06/18/further-evasion-in-the-forgotten-corners-of-ms-xls/). Note that this will generate a larger document than *CharSubroutine* mode due to the addition of decoy variable names.
 
 Specify an encoding by using the `method` flag when building - for example, to use the *CharSubroutine* encoder:
 
