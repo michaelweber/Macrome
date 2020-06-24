@@ -332,6 +332,7 @@ namespace Macrome
             //fefe, ffff, feff, fffe, ffef, fff0, fff1, fff6, fefd, 0000, dddd
             //Pretty much any character that is invalid unicode - though \ucccc doesn't seem to work - need better criteria for parsing
             //TODO [Stealth] Randomize which invalid unicode characters are injected into this string
+            
             replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000A\uffffu\u0000\ufefft\ufffeo\uffef_\ufff0O\ufff1p\ufff6e\ufefdn\udddd", true));
             replaceLabelStringLbl.fBuiltin = false;
 

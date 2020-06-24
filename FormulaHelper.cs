@@ -123,6 +123,20 @@ namespace Macrome
             return charInvocationFormula;
         }
 
+        public static Formula CreateFormulaInvocationFormulaForLblIndexes(ushort rw, ushort col, int lblIndex1, int lblIndex2)
+        {
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.RETURN, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgFuncVar(CetabValues.FORMULA, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgName(lblIndex1));
+            ptgList.Add(new PtgName(lblIndex2));
+            ptgList.Reverse();
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>(ptgList);
+
+            Formula formulaInvocationFormula = new Formula(new Cell(rw, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+            return formulaInvocationFormula;
+        }
+
 
         public static Stack<AbstractPtg> GetAlertPtgStack(string alertString)
         {

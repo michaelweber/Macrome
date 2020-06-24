@@ -214,18 +214,28 @@ namespace b2xtranslator.xls.XlsFileFormat
                     bw.Write(ptgArea.colFirst);
                     bw.Write(ptgArea.colLast);
                     break;
+                case PtgArea3d ptgArea3d:
+                    bw.Write(ptgArea3d.ixti);
+                    bw.Write(ptgArea3d.rwFirst);
+                    bw.Write(ptgArea3d.rwLast);
+                    bw.Write(ptgArea3d.colFirst);
+                    bw.Write(ptgArea3d.colLast);
+                    break;
                 case PtgErr ptgErr:
                     bw.Write(ptgErr.Err);
                     break;
-                case PtgAttrSum ptgAttrSum: //Start 0x19 ## Section
                 case PtgAttrSemi ptgAttrSemi:
+                    bw.Write(ptgAttrSemi.Unused);
+                    break;
+                case PtgAttrSum ptgAttrSum: //Start 0x19 ## Section
+                
                 case PtgAttrChoose ptgAttrChoose:
                 
                 case PtgNotDocumented ptgNotDocumented:
                 case PtgMemErr ptgMemErr:
                 
                 case PtgAreaN ptgAreaN:
-                case PtgArea3d ptgArea3d:
+                
                 case PtgNameX ptgNameX:
                 case PtgRefErr ptgRefErr:
                 case PtgRefErr3d ptgRefErr3d:
@@ -327,6 +337,16 @@ namespace b2xtranslator.xls.XlsFileFormat
                         {
                             return GetFormulaStringInner(ref ptgStack, showAttributes);
                         }
+                    case PtgAttrSemi attrSemi:
+                        if (showAttributes)
+                        {
+                            return string.Format("[AttrSemi:{0}]", attrSemi.Unused) +
+                                   GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                        else
+                        {
+                            return GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
                     case PtgName ptgName:
                         return ptgName.ToString();
                         
@@ -355,6 +375,8 @@ namespace b2xtranslator.xls.XlsFileFormat
                         return ptgRef.ToString();
                     case PtgArea ptgArea:
                         return ptgArea.ToString();
+                    case PtgArea3d ptgArea3d:
+                        return ptgArea3d.ToString();
                     case PtgStr ptgStr: return string.Format("\"{0}\"", ptgStr.getData());
                     default: return nextPtg.getData();
                 }

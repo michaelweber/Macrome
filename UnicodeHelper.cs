@@ -17,6 +17,7 @@ namespace Macrome
         //We can also inject "ignored" unicode characters like non-breaking non-whitespace characters (\uffef, \u2060)
         //We can also inject invalid unicode characters like \udddd
         public const string UnicodeArgumentLabel = "\u0000v\u2060\u0041\u0325\u2060r";
+        public const string UnicodeArgumentLabel2 = "\u0000v\u2060\u0041\u0325\u2060r2";
 
         //We can inject \u034f after any letter an arbitrary number of times since Excel will ignore it
         //https://en.wikipedia.org/wiki/Combining_Grapheme_Joiner - U+034F
@@ -25,6 +26,8 @@ namespace Macrome
         //\uffef is also ignored, though it will create a visible space
         //Invalid unicode values like \udddd can also be used here, though they will create a visible artifact of use
         public const string VarName = "v\u2060\u200c\u200d\u1e01\u034fr";
+        public const string VarName2 = "v\u2060\u200c\u200d\u1e01\u034fr2";
+
 
         //\u180e and \u200b are considered zero width whitespace characters that can break a string
         //Decoy var names can be started (or injected) with a unicode whitespace character that breaks comparisons but looks identical

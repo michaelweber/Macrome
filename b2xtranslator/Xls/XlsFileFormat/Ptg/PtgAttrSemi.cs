@@ -6,7 +6,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
     public class PtgAttrSemi : AbstractPtg
     {
         public const Ptg0x19Sub ID = Ptg0x19Sub.PtgAttrSemi;
-
+        public byte[] Unused;
         public PtgAttrSemi(IStreamReader reader, Ptg0x19Sub ptgid)
             :
             base(reader, ptgid)
@@ -16,7 +16,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.Data = "Semi";
             this.type = PtgType.Operator;
             this.popSize = 1;
-            this.Reader.ReadBytes(2);
+            this.Unused = this.Reader.ReadBytes(2);
         }
     }
 }
