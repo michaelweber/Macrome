@@ -82,7 +82,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                 else if (ptg is PtgNameX)
                 {
                     PtgNameX ptgNameX = (ptg as PtgNameX);
-                    int index = ptgNameX.ixti;
+                    int index = ptgNameX.ixti - 1;
                     XTI relevantXti = externSheetRecord.rgXTI[index];
 
                     if (relevantXti.itabFirst >= 0)
@@ -146,10 +146,40 @@ namespace b2xtranslator.xls.XlsFileFormat
             return updatedRecords;
         }
 
-        private static byte[] GetByteDataFromPtg(AbstractPtg ptg)
+        private static byte[] GetByteDataFromPtg(AbstractPtg ptg, bool isAttributePtg = false)
         {
             MemoryStream ms = new MemoryStream();
             BinaryWriter bw = new BinaryWriter(ms);
+
+            if (isAttributePtg)
+            {
+                switch (ptg)
+                {
+                    case PtgAttrBaxcel ptgAttrBaxcel:
+                        bw.Write(ptgAttrBaxcel.DataBytes);
+                        break;
+                    case PtgAttrIf ptgAttrIf:
+                        bw.Write(ptgAttrIf.PtgOffset);
+                        break;
+                    case PtgAttrGoto ptgAttrGoto:
+                        bw.Write(ptgAttrGoto.PtgOffset);
+                        break;
+                    case PtgAttrSpace ptgAttrSpace:
+                        bw.Write(ptgAttrSpace.PtgAttrSpaceType);
+                        break;
+                    case PtgAttrSemi ptgAttrSemi:
+                        bw.Write(ptgAttrSemi.Unused);
+                        break;
+                    case PtgAttrSum ptgAttrSum:
+                        bw.Write(ptgAttrSum.Unused);
+                        break;
+                    default:
+                        throw new NotImplementedException(string.Format("No byte conversion implemented for {0}", (Ptg0x19Sub)ptg.Id));
+                }
+
+                return bw.GetBytesWritten();
+            }
+
             switch (ptg)
             {
                 case PtgInt ptgInt: 
@@ -219,18 +249,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                     bw.Write(Convert.ToUInt16(ptgRef3d.ixti));
                     bw.Write(loc4.Bytes);
                     break;
-                case PtgAttrBaxcel ptgAttrBaxcel:
-                    bw.Write(ptgAttrBaxcel.DataBytes);
-                    break;
-                case PtgAttrIf ptgAttrIf:
-                    bw.Write(ptgAttrIf.Offset);
-                    break;
-                case PtgAttrGoto ptgAttrGoto:
-                    bw.Write(ptgAttrGoto.Offset);
-                    break;
-                case PtgAttrSpace ptgAttrSpace:
-                    bw.Write(ptgAttrSpace.PtgAttrSpaceType);
-                    break;
+                
                 case PtgName ptgName:
                     bw.Write(ptgName.nameindex);
                     break;
@@ -258,12 +277,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgErr ptgErr:
                     bw.Write(ptgErr.Err);
                     break;
-                case PtgAttrSemi ptgAttrSemi:
-                    bw.Write(ptgAttrSemi.Unused);
-                    break;
-                case PtgAttrSum ptgAttrSum: 
-                    bw.Write(ptgAttrSum.Unused);
-                    break;
+                
                     
                 //Start 0x19 ## Section
                 
@@ -446,6 +460,11 @@ namespace b2xtranslator.xls.XlsFileFormat
 
         public static string GetFormulaString(Stack<AbstractPtg> ptgStack, bool showAttributes = false)
         {
+            if (ptgStack.Count == 0)
+            {
+                return "!Null Ptg Stack! (Manually Edited Ptg Record)";
+            }
+
             Stack<AbstractPtg> cloneStack = new Stack<AbstractPtg>(ptgStack.Reverse());
             string formulaString = "";
             formulaString  = GetFormulaStringInner(ref cloneStack, showAttributes);
@@ -505,7 +524,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                 if (ptg.fPtgNumberHighBit) ptgNumber += 0x80;
 
                 bw.Write(Convert.ToByte(ptgNumber));
-                bw.Write(GetByteDataFromPtg(ptg));
+                bw.Write(GetByteDataFromPtg(ptg, isByte19PtgHeader));
             }
 
             return bw.GetBytesWritten();

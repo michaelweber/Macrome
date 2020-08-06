@@ -20,7 +20,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.Data = "SUM";
             this.type = PtgType.Operator;
             this.popSize = 1;
-            this.Unused = Convert.ToUInt16(this.Reader.ReadBytes(2)); 
+            this.Unused = this.Reader.ReadUInt16(); 
         }
     }
 }

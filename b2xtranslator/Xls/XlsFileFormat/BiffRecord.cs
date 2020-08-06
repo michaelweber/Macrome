@@ -16,6 +16,11 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
 
         protected byte[] RawBytes = null;
 
+        public byte[] RawBytesValue
+        {
+            get { return RawBytes; }
+        }
+
         RecordType _id;
         protected uint _length;
         long _offset;

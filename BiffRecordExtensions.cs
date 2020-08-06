@@ -82,7 +82,15 @@ namespace Macrome
 
             if (record is Formula)
             {
-                biffString = ((Formula)record).ToFormulaString(showAttrInfo);
+                Formula f = (Formula) record;
+                if (f.cce == 0 && f.RawBytesValue.Length != bytes.Length + 4)
+                {
+                    biffString = "!Error Parsing Formula!";
+                }
+                else
+                {
+                    biffString = f.ToFormulaString(showAttrInfo);
+                }
             }
             else if (record.Id == RecordType.Dimensions)
             {
