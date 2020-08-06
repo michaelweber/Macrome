@@ -83,6 +83,20 @@ namespace UnitTests
             }
         }
 
+        public static WorkbookStream GetMassSelectUDFArgumentSheet()
+        {
+            string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\bug_report_1_mass_select_argument.xls";
+            using (var fs = new FileStream(template, FileMode.Open))
+            {
+                StructuredStorageReader ssr = new StructuredStorageReader(fs);
+                var wbStream = ssr.GetStream("Workbook");
+                byte[] wbBytes = new byte[wbStream.Length];
+                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                return new WorkbookStream(wbBytes);
+            }
+        }
+
+
         public static WorkbookStream GetBuiltinHiddenLblSheet()
         {
             string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\builtin_hidden_lbl.xls";

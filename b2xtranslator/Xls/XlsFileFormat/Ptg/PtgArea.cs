@@ -43,6 +43,16 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
 
         public override string ToString()
         {
+            //Special case where the area is the ENTIRE row or the ENTIRE column
+            if (colFirst == 0 && colLast == 0xFF && rwFirst == rwLast)
+            {
+                return string.Format("{0}:{0}", rwFirst + 1);
+            }
+            else if (rwFirst == 0 && rwLast == 0xFFFF && colFirst == colLast)
+            {
+                return string.Format("{0}:{0}", ExcelHelperClass.GetExcelA1ColNameFromColNumber(colFirst + 1));
+            }
+
             string firstCell = ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", rwFirst + 1, (colFirst + 1) & 0xFF));
             string secondCell = ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", rwLast + 1, (colLast + 1) & 0xFF));
             return string.Format("{0}:{1}", firstCell, secondCell);

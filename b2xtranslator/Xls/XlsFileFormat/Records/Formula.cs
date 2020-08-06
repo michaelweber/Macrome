@@ -3,11 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using b2xtranslator.Spreadsheet.XlsFileFormat.DataContainer;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.Tools;
 using b2xtranslator.xls.XlsFileFormat;
+using b2xtranslator.xls.XlsFileFormat.Ptg;
 using b2xtranslator.xls.XlsFileFormat.Records;
 using b2xtranslator.xls.XlsFileFormat.Structures;
 
@@ -185,6 +187,15 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                 try
                 {
                     this.ptgStack = ExcelHelperClass.getFormulaStack(this.Reader, this.cce);
+
+                    List<PtgMemArea> memAreas = this.ptgStack.Where(ptg => ptg is PtgMemArea).Cast<PtgMemArea>().ToList();
+
+                    //Read out the rgce for relevant PtgExtraMem if necessary
+                    foreach (var memArea in memAreas)
+                    {
+                        memArea.ExtraMem = new PtgExtraMem(this.Reader);
+                    }
+
                 }
                 catch (Exception ex)
                 {

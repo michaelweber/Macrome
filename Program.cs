@@ -54,14 +54,7 @@ namespace Macrome
 
             WorkbookStream wbs = new WorkbookStream(path.FullName);
 
-            List<RecordType> relevantTypes = new List<RecordType>()
-                {
-                    RecordType.BoundSheet8, //Sheet definitions (Defines macro sheets + hides them)
-                    RecordType.Lbl,         //Named Cells (Contains Auto_Start) 
-                    RecordType.Formula,     //The meat of most cell content
-                    RecordType.SupBook,     //Contains information for cross-sheet references
-                    RecordType.ExternSheet  //Contains the XTI records mapping ixti values to BoundSheet8
-                };
+            
 
             int numBytesToDump = 0;
             if (dumpHexBytes) numBytesToDump = 0x1000;
@@ -76,16 +69,8 @@ namespace Macrome
             }
             else
             {
-                List<BiffRecord> relevantRecords = wbs.Records.Where(rec => relevantTypes.Contains(rec.Id)).ToList();
-                relevantRecords = RecordHelper.ConvertToSpecificRecords(relevantRecords);
-
-                relevantRecords = PtgHelper.UpdateGlobalsStreamReferences(relevantRecords);
-                foreach (var record in relevantRecords)
-                {
-                    string dumpString = "";
-                    dumpString += record.ToHexDumpString(numBytesToDump, showAttrInfo);
-                    Console.WriteLine(dumpString);
-                }
+                string dumpString = RecordHelper.GetRelevantRecordDumpString(wbs, dumpHexBytes, showAttrInfo);
+                Console.WriteLine(dumpString);
             }
         }
 

@@ -7,6 +7,7 @@ using b2xtranslator.Spreadsheet.XlsFileFormat;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.Tools;
+using b2xtranslator.xls.XlsFileFormat;
 using b2xtranslator.xls.XlsFileFormat.Records;
 using b2xtranslator.xls.XlsFileFormat.Structures;
 using Macrome;
@@ -33,6 +34,16 @@ namespace UnitTests
 
             Assert.AreEqual(wbBytes.Length, parsedBytes.Length);
             Assert.AreEqual(wbBytes, parsedBytes);
+        }
+
+        [Test]
+        public void TestParseMassSelectionWithArgument()
+        {
+            WorkbookStream wbs = TestHelpers.GetMassSelectUDFArgumentSheet();
+
+            string dumpString = RecordHelper.GetRelevantRecordDumpString(wbs);
+
+            Console.WriteLine(dumpString);
         }
 
         [Test]

@@ -251,7 +251,9 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
                             case PtgNumber.PtgAreaErr: ptg = new PtgAreaErr(reader, ptgtype); break;
                             case PtgNumber.PtgAreaErr3d: ptg = new PtgAreaErr3d(reader, ptgtype); break;
                             case PtgNumber.PtgMemFunc: ptg = new PtgMemFunc(reader, ptgtype); break;
+                            case PtgNumber.PtgMemArea: ptg = new PtgMemArea(reader, ptgtype); break;
                             case PtgNumber.PtgErr: ptg = new PtgErr(reader, ptgtype); break;
+                            case PtgNumber.PtgRange: ptg = new PtgRange(reader, ptgtype); break;
 
                             default: break;
                         }
@@ -451,7 +453,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
             return string.Format("R{0}C{1}", rowNum, colNum);
         }
 
-        private static string GetExcelA1ColNameFromColNumber(int colNumber)
+        public static string GetExcelA1ColNameFromColNumber(int colNumber)
         {
             if (colNumber <= 26)
             {

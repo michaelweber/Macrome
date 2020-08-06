@@ -40,6 +40,14 @@ namespace b2xtranslator.xls.XlsFileFormat
                     string matchingLabel = labelRecords[index - 1].Name.Value;
                     modifiedStack.Add(new PtgName(index, matchingLabel));
                 }
+                else if (ptg is PtgNameX)
+                {
+                    int index = (ptg as PtgNameX).nameindex;
+                    ushort ixti = (ptg as PtgNameX).ixti;
+
+                    string matchingLabel = labelRecords[index - 1].Name.Value;
+                    modifiedStack.Add(new PtgNameX(ixti, index, matchingLabel));
+                }
                 else
                 {
                     modifiedStack.Add(ptg);
@@ -65,6 +73,23 @@ namespace b2xtranslator.xls.XlsFileFormat
                         BoundSheet8 relevantSheet = sheetRecords[relevantXti.itabFirst];
                         string sheetName = relevantSheet.stName.Value;
                         modifiedStack.Add(new PtgRef3d(ref3d.rw, ref3d.col, ref3d.ixti, ref3d.rwRelative, ref3d.colRelative, sheetName));
+                    }
+                    else
+                    {
+                        modifiedStack.Add(ptg);
+                    }
+                }
+                else if (ptg is PtgNameX)
+                {
+                    PtgNameX ptgNameX = (ptg as PtgNameX);
+                    int index = ptgNameX.ixti;
+                    XTI relevantXti = externSheetRecord.rgXTI[index];
+
+                    if (relevantXti.itabFirst >= 0)
+                    {
+                        BoundSheet8 relevantSheet = sheetRecords[relevantXti.itabFirst];
+                        string sheetName = relevantSheet.stName.Value;
+                        modifiedStack.Add(new PtgNameX(ptgNameX.ixti, ptgNameX.nameindex, ptgNameX.nameValue, sheetName));
                     }
                     else
                     {
@@ -152,6 +177,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgUnion ptgUnion:
                 case PtgIsect ptgIsect:
                 case PtgMissArg ptgMissArg:
+                case PtgRange ptgRange:
                     //No Data
                     break;
                 case PtgNum ptgNum:
@@ -208,6 +234,14 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgName ptgName:
                     bw.Write(ptgName.nameindex);
                     break;
+                case PtgNameX ptgNameX:
+                    bw.Write(Convert.ToUInt16(ptgNameX.ixti));
+                    bw.Write(Convert.ToUInt32(ptgNameX.nameindex));
+                    break;
+                case PtgMemArea ptgMemArea:
+                    bw.Write(ptgMemArea.Unused);
+                    bw.Write(ptgMemArea.cce);
+                    break;
                 case PtgArea ptgArea:
                     bw.Write(ptgArea.rwFirst);
                     bw.Write(ptgArea.rwLast);
@@ -227,7 +261,11 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgAttrSemi ptgAttrSemi:
                     bw.Write(ptgAttrSemi.Unused);
                     break;
-                case PtgAttrSum ptgAttrSum: //Start 0x19 ## Section
+                case PtgAttrSum ptgAttrSum: 
+                    bw.Write(ptgAttrSum.Unused);
+                    break;
+                    
+                //Start 0x19 ## Section
                 
                 case PtgAttrChoose ptgAttrChoose:
                 
@@ -236,7 +274,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                 
                 case PtgAreaN ptgAreaN:
                 
-                case PtgNameX ptgNameX:
+                
                 case PtgRefErr ptgRefErr:
                 case PtgRefErr3d ptgRefErr3d:
                 case PtgAreaErr ptgAreaErr:
@@ -262,6 +300,12 @@ namespace b2xtranslator.xls.XlsFileFormat
 
         private static string GetFormulaStringInner(ref Stack<AbstractPtg> ptgStack, bool showAttributes = false)
         {
+            if (ptgStack.Count == 0)
+            {
+                Console.WriteLine("ERROR! Stack is Empty");
+                return "EMPTYSTACKERROR";
+            }
+
             AbstractPtg nextPtg = ptgStack.Pop();
 
             if (nextPtg.OpType() == PtgType.Operator)
@@ -347,9 +391,22 @@ namespace b2xtranslator.xls.XlsFileFormat
                         {
                             return GetFormulaStringInner(ref ptgStack, showAttributes);
                         }
+                    case PtgAttrSum attrSum:
+                        if (showAttributes)
+                        {
+                            return string.Format("[AttrSum:{0}]", attrSum.Unused) +
+                                   GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
+                        else
+                        {
+                            return GetFormulaStringInner(ref ptgStack, showAttributes);
+                        }
                     case PtgName ptgName:
                         return ptgName.ToString();
-                        
+                    case PtgNameX ptgNameX:
+                        return ptgNameX.ToString();
+                    case PtgBool ptgBool:
+                        return ptgBool.getData();
                     default:
                         //Special case for operators
                         if (nextPtg is PtgParen)
@@ -377,6 +434,8 @@ namespace b2xtranslator.xls.XlsFileFormat
                         return ptgArea.ToString();
                     case PtgArea3d ptgArea3d:
                         return ptgArea3d.ToString();
+                    case PtgMemArea ptgMemArea:
+                        return "MEMAREA";
                     case PtgStr ptgStr: return string.Format("\"{0}\"", ptgStr.getData());
                     default: return nextPtg.getData();
                 }

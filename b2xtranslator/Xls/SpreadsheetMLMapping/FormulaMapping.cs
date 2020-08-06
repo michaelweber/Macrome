@@ -269,7 +269,7 @@ namespace b2xtranslator.SpreadsheetMLMapping
                     else if (ptg is PtgNameX)
                     {
                         var ptgnx = (PtgNameX)ptg;
-                        string opstring = xlsContext.XlsDoc.WorkBookData.getExternNameByRef(ptgnx.ixti, ptgnx.nameindex);
+                        string opstring = xlsContext.XlsDoc.WorkBookData.getExternNameByRef(ptgnx.ixti, Convert.ToUInt32(ptgnx.nameindex));
                         resultStack.Push(opstring);
                     }
                     else if (ptg is PtgName)
