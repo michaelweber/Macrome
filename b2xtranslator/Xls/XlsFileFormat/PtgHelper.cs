@@ -427,8 +427,13 @@ namespace b2xtranslator.xls.XlsFileFormat
                         {
                             return string.Format("({0})", GetFormulaStringInner(ref ptgStack, showAttributes));
                         }
+                        else if (nextPtg is PtgUminus || nextPtg is PtgUplus || nextPtg is PtgPercent)
+                        {
+                            return string.Format("{1}{0}", GetFormulaStringInner(ref ptgStack, showAttributes),
+                                nextPtg.getData());
+                        }
                         //If this is a simple operator like + or -
-                        if (nextPtg.getLength() == 1)
+                        else if (nextPtg.getLength() == 1)
                         {
                             //We pop the arguments off the stack in reverse order, hence the 'backwards' ordering
                             string formatString = "{2}{1}{0}";
