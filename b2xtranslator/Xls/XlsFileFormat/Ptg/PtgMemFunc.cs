@@ -15,6 +15,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
         /// </summary>
         public Stack<AbstractPtg> ptgStack;
 
+        public ushort cce;
+
         public PtgMemFunc(IStreamReader reader, PtgNumber ptgid)
             :
             base(reader, ptgid)
@@ -26,8 +28,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.type = PtgType.Operand;
             this.popSize = 1;
 
-            int cce = reader.ReadUInt16();
-            this.Length = (uint)(3 + cce);
+            this.cce = reader.ReadUInt16();
+            this.Length = (uint)(3 + this.cce);
 
             long oldStreamPosition = this.Reader.BaseStream.Position;
 

@@ -274,13 +274,23 @@ namespace b2xtranslator.xls.XlsFileFormat
                     bw.Write(ptgArea3d.colFirst);
                     bw.Write(ptgArea3d.colLast);
                     break;
+
                 case PtgErr ptgErr:
                     bw.Write(ptgErr.Err);
                     break;
-                
-                    
+                case PtgAreaErr3d ptgAreaErr3d:
+                    bw.Write(ptgAreaErr3d.ixti);
+                    bw.Write(ptgAreaErr3d.unused1);
+                    bw.Write(ptgAreaErr3d.unused2);
+                    bw.Write(ptgAreaErr3d.unused3);
+                    bw.Write(ptgAreaErr3d.unused4);
+                    break;
+                case PtgMemFunc ptgMemFunc:
+                    bw.Write(ptgMemFunc.cce);
+                    bw.Write(GetBytes(ptgMemFunc.ptgStack));
+                    break;
                 //Start 0x19 ## Section
-                
+
                 case PtgAttrChoose ptgAttrChoose:
                 
                 case PtgNotDocumented ptgNotDocumented:
@@ -292,8 +302,6 @@ namespace b2xtranslator.xls.XlsFileFormat
                 case PtgRefErr ptgRefErr:
                 case PtgRefErr3d ptgRefErr3d:
                 case PtgAreaErr ptgAreaErr:
-                case PtgAreaErr3d ptgAreaErr3d:
-                case PtgMemFunc ptgMemFunc:
                 default:
                     throw new NotImplementedException(string.Format("No byte conversion implemented for {0}", ptg));
             }
