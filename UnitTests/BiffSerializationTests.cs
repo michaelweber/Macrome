@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using b2xtranslator.Spreadsheet.XlsFileFormat;
@@ -150,5 +151,30 @@ namespace UnitTests
             Assert.AreEqual(val, output2);
         }
 
+
+        [Test]
+        public void TestGetDefaultMacroSheetInternationalized()
+        {
+
+            Intl manuallyCreatedIntlRecord = new Intl();
+
+            byte[] intlBytes = manuallyCreatedIntlRecord.GetBytes();
+
+            BiffRecord rec = new BiffRecord(intlBytes);
+
+            Intl convertedRecord = rec.AsRecordType<Intl>();
+
+            Assert.AreEqual(convertedRecord.GetBytes(), manuallyCreatedIntlRecord.GetBytes());
+
+            WorkbookStream wbs = TestHelpers.GetDefaultMacroTemplate();
+            List<BiffRecord> sheetRecords = wbs.GetRecordsForBOFRecord(wbs.GetAllRecordsByType<BOF>().Last());
+
+            WorkbookStream internationalWbs = new WorkbookStream(sheetRecords);
+            var intlRecord = new Intl();
+            internationalWbs = internationalWbs.InsertRecord(intlRecord, internationalWbs.GetAllRecordsByType<b2xtranslator.Spreadsheet.XlsFileFormat.Records.Index>().First());
+            Assert.IsTrue(internationalWbs.ContainsRecord(intlRecord));
+            var nextRecord = internationalWbs.Records.SkipWhile(r => r.Id != RecordType.Intl).Skip(1).Take(1).First();
+            Assert.IsTrue(nextRecord.Id == RecordType.CalcMode);
+        }
     }
 }

@@ -156,16 +156,24 @@ namespace b2xtranslator.StructuredStorage.Reader
             // Read full sectors
             while (totalBytesRead + this._fat.SectorSize < count)
             {
-                this._fat.SeekToPositionInSector(this._sectors[sectorInChain], 0);
-                bytesRead = this._fat.UncheckedRead(array, positionInArray, this._fat.SectorSize);
-
-                // Update variables
-                this._position += bytesRead;
-                positionInArray += bytesRead;
-                totalBytesRead += bytesRead;
-                sectorInChain++;
-                if (bytesRead != this._fat.SectorSize)
+                try
                 {
+                    this._fat.SeekToPositionInSector(this._sectors[sectorInChain], 0);
+                    bytesRead = this._fat.UncheckedRead(array, positionInArray, this._fat.SectorSize);
+
+                    // Update variables
+                    this._position += bytesRead;
+                    positionInArray += bytesRead;
+                    totalBytesRead += bytesRead;
+                    sectorInChain++;
+                    if (bytesRead != this._fat.SectorSize)
+                    {
+                        return totalBytesRead;
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Console.WriteLine(e.Message);
                     return totalBytesRead;
                 }
             }
@@ -309,7 +317,10 @@ namespace b2xtranslator.StructuredStorage.Reader
         {
             if (((ulong)this._sectors.Count) != Math.Ceiling((double)this._length / this._fat.SectorSize))
             {
-                throw new ChainSizeMismatchException(this._name);
+                // Malware mucks with this sometimes, we don't care - but if it happens we should probably mention it
+                var exception = new ChainSizeMismatchException(this._name);
+                Console.WriteLine(string.Format("[Warning] Chain Size has been tampered with - possible obfuscation."));
+                // throw new ChainSizeMismatchException(this._name);
             }
         }
 

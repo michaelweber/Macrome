@@ -90,7 +90,7 @@ namespace Macrome
                 else
                 {
                     biffString = f.ToFormulaString(showAttrInfo);
-                }
+                } 
             }
             else if (record.Id == RecordType.Dimensions)
             {
@@ -98,7 +98,14 @@ namespace Macrome
             }
             else if (record.Id == RecordType.Lbl)
             {
-                biffString = ((Lbl)record).ToString();
+                try
+                {
+                    biffString = ((Lbl) record).ToString();
+                }
+                catch (Exception e)
+                {
+                    biffString = record.AsRecordType<Lbl>().ToString();
+                }
             }
 
 

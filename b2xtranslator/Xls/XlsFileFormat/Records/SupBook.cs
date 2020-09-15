@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using b2xtranslator.Spreadsheet.XlsFileFormat.Structures;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.Tools;
 
@@ -160,12 +161,19 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                 bw.Write(Convert.ToUInt16(this.ctab));
                 bw.Write(Convert.ToUInt16(this.cch));
 
-                if (this.isvirtpath)
+                if (this.isvirtpath && this.ctab == 1 && this.cch < 0xff)
                 {
-                   throw new NotImplementedException();
+                    XLUnicodeStringNoCch virtPathXLU = new XLUnicodeStringNoCch(virtpathstring);
+                    bw.Write(virtPathXLU.Bytes);
+                    foreach (var rgstString in this.rgst)
+                    {
+                        ushort length = Convert.ToUInt16(rgstString.Length);
+                        bw.Write(length);
+                        XLUnicodeStringNoCch rgstXLU = new XLUnicodeStringNoCch(rgstString);
+                        bw.Write(rgstXLU.Bytes);
+                    }
                 }
-
-                if ((this.isexternalworkbookreferencing) || (this.isunusedsupportinglink))
+                else if (this.isvirtpath || this.isexternalworkbookreferencing || this.isunusedsupportinglink)
                 {
                     throw new NotImplementedException();
                 }

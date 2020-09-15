@@ -110,6 +110,19 @@ namespace UnitTests
             }
         }
 
+        public static WorkbookStream GetDefaultMacroTemplate()
+        {
+            string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\default_macro_template.xls";
+            using (var fs = new FileStream(template, FileMode.Open))
+            {
+                StructuredStorageReader ssr = new StructuredStorageReader(fs);
+                var wbStream = ssr.GetStream("Workbook");
+                byte[] wbBytes = new byte[wbStream.Length];
+                wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
+                return new WorkbookStream(wbBytes);
+            }
+        }
+
         public static WorkbookStream GetCharRoundMacroWorkbookStream()
         {
             string template = AssemblyDirectory + Path.DirectorySeparatorChar + @"TestDocs\char-round-macro.xls";

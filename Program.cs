@@ -14,6 +14,7 @@ using b2xtranslator.Spreadsheet.XlsFileFormat.Ptg;
 using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.xls.XlsFileFormat;
+using b2xtranslator.xls.XlsFileFormat.Records;
 
 namespace Macrome
 {
@@ -105,8 +106,9 @@ namespace Macrome
             wbEditor.UnhideSheets();
 
             ExcelDocWriter writer = new ExcelDocWriter();
-            string outputPath = AssemblyDirectory + Path.DirectorySeparatorChar + outputFileName;
+            string outputPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + outputFileName;
             Console.WriteLine("Writing deobfuscated document to {0}", outputPath);
+
             writer.WriteDocument(outputPath, wbEditor.WbStream);
         }
 
@@ -145,6 +147,7 @@ namespace Macrome
             }
 
             List<BiffRecord> defaultMacroSheetRecords = GetDefaultMacroSheetRecords();
+
 
             string decoyDocPath = decoyDocument.FullName;
 
@@ -201,7 +204,7 @@ namespace Macrome
 
             if (binaryPayload != null && binaryPayload.Length > 0)
             {
-                wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 1, method);
+                 wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 1, method);
                  curRw = wbe.WbStream.GetFirstEmptyRowInColumn(colStart) + 1;
 
                  if (rwStart > 0xE000)
@@ -318,7 +321,7 @@ namespace Macrome
             }
         }
 
-        private static List<BiffRecord> GetDefaultMacroSheetRecords()
+        private static List<BiffRecord> GetDefaultMacroSheetRecords(bool isInternationalSheet = true)
         {
             string defaultMacroPath = AssemblyDirectory + Path.DirectorySeparatorChar + @"default_macro_template.xls";
             using (var fs = new FileStream(defaultMacroPath, FileMode.Open))
@@ -330,6 +333,14 @@ namespace Macrome
                 WorkbookStream wbs = new WorkbookStream(wbBytes);
                 //The last BOF/EOF set is our Macro sheet.
                 List<BiffRecord> sheetRecords = wbs.GetRecordsForBOFRecord(wbs.GetAllRecordsByType<BOF>().Last());
+
+                if (isInternationalSheet)
+                {
+                    WorkbookStream internationalWbs = new WorkbookStream(sheetRecords);
+                    internationalWbs = internationalWbs.InsertRecord(new Intl(), internationalWbs.GetAllRecordsByType<Index>().First());
+                    return internationalWbs.Records;
+                }
+
                 return sheetRecords;
             }
 
