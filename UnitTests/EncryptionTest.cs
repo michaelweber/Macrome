@@ -126,18 +126,5 @@ namespace UnitTests
             Assert.AreEqual(originalCpRecord.cv, newCpRecord.cv);
         }
 
-        [Test]
-        public void TestSaveEncryptedDocstream()
-        {
-            WorkbookStream obfuscatedStream = TestHelpers.GetXorObfuscatedWorkbookStream();
-            ExcelDocWriter writer = new ExcelDocWriter();
-
-            XorObfuscation xorObfuscation = new XorObfuscation();
-            WorkbookStream deobfuscatedStream = xorObfuscation.DecryptWorkbookStream(obfuscatedStream);
-            WorkbookStream reObfuscatedStream = xorObfuscation.EncryptWorkbookStream(deobfuscatedStream);
-
-            writer.WriteDocument("C:\\Users\\Weber\\source\\repos\\michaelweber\\Macrome\\bin\\Debug\\netcoreapp2.0\\test-encrypted2.xls", reObfuscatedStream);
-
-        }
     }
 }
