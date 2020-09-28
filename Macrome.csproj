@@ -38,13 +38,13 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup>
-    <ContentWithTargetPath Include="Docs\decoy_document.xls">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <TargetPath>decoy_document.xls</TargetPath>
-    </ContentWithTargetPath>
     <ContentWithTargetPath Include="Docs\default_macro_template.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <TargetPath>default_macro_template.xls</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="Docs\decoy_document.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <TargetPath>decoy_document.xls</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Docs\macro_example.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
