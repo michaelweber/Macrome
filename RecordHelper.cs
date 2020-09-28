@@ -19,7 +19,8 @@ namespace Macrome
             RecordType.Lbl,         //Named Cells (Contains Auto_Start) 
             RecordType.Formula,     //The meat of most cell content
             RecordType.SupBook,     //Contains information for cross-sheet references
-            RecordType.ExternSheet  //Contains the XTI records mapping ixti values to BoundSheet8
+            RecordType.ExternSheet, //Contains the XTI records mapping ixti values to BoundSheet8
+            RecordType.FilePass,    //Indicates the presence of an RC4 or XOR Obfuscation Password
         };
 
         public static string GetRelevantRecordDumpString(WorkbookStream wbs, bool dumpHexBytes = false, bool showAttrInfo = false)
@@ -27,10 +28,16 @@ namespace Macrome
             int numBytesToDump = 0;
             if (dumpHexBytes) numBytesToDump = 0x1000;
 
-            List<BiffRecord> relevantRecords = wbs.Records.Where(rec => RecordHelper.RelevantTypes.Contains(rec.Id)).ToList();
-            relevantRecords = RecordHelper.ConvertToSpecificRecords(relevantRecords);
+            bool hasPassword = wbs.HasPasswordToOpen();
 
-            relevantRecords = PtgHelper.UpdateGlobalsStreamReferences(relevantRecords);
+            List<BiffRecord> relevantRecords = wbs.Records.Where(rec => RecordHelper.RelevantTypes.Contains(rec.Id)).ToList();
+
+            //We can only interpret the data of these records if they are not encrypted
+            if (!hasPassword)
+            {
+                relevantRecords = RecordHelper.ConvertToSpecificRecords(relevantRecords);
+                relevantRecords = PtgHelper.UpdateGlobalsStreamReferences(relevantRecords);
+            }
 
             string dumpString = "";
 
@@ -84,10 +91,18 @@ namespace Macrome
             while (vsr.BaseStream.Position < vsr.BaseStream.Length)
             {
                 RecordType id = (RecordType)vsr.ReadUInt16();
+
+                if (id == 0)
+                {
+                    // Console.WriteLine("RecordID == 0 - stopping");
+                    break;
+                }
+
+
                 UInt16 length = vsr.ReadUInt16();
 
                 BiffRecord br = new BiffRecord(vsr, id, length);
-
+                
                 vsr.ReadBytes(length);
                 records.Add(br);
             }

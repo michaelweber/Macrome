@@ -266,7 +266,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
                     br.Length == Length)
                 { 
                     byte[] recordBytes = br.GetBytes();
-                    return recordBytes.SequenceEqual(GetBytes());
+                    byte[] thisBytes = GetBytes();
+                    return recordBytes.SequenceEqual(thisBytes);
                 }
             }
 

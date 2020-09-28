@@ -100,11 +100,11 @@ namespace Macrome
             {
                 try
                 {
-                    biffString = ((Lbl) record).ToString();
+                    biffString = record.AsRecordType<Lbl>().ToString();
                 }
                 catch (Exception e)
                 {
-                    biffString = record.AsRecordType<Lbl>().ToString();
+                    biffString = record.ToString();
                 }
             }
 

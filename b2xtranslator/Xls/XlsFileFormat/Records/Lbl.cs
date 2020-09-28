@@ -125,11 +125,23 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         /// </summary>
         public ushort itab;
 
+        /// <summary>
+        /// Populated when our Lbl record length calculation does not equal the length value of the BIFF Record.
+        /// Occurs when records are encrypted.
+        /// </summary>
+        public byte[] RawLblBytes = null;
+
         private const int LblFixedSize = 14;
 
-        private uint CalculateLength()
+        private uint CalculateLength(bool fHighByte = false)
         {
-            if (Name.fHighByte)
+            bool isUnicodeString = fHighByte;
+            if (Name != null)
+            {
+                isUnicodeString = Name.fHighByte;
+            }
+
+            if (isUnicodeString)
             {
                 //If we're unicode, then there are cch * 2 bytes used
                 return LblFixedSize + (uint)cce + (uint)cch * 2 + 1;
@@ -250,6 +262,20 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             // read 4 reserved bytes 
             this.fReserved4 = reader.ReadUInt32();
 
+            //Peek at the fHighByte value to figure out if the Lbl is encrypted or not
+            long oldStreamPosition = this.Reader.BaseStream.Position;
+            bool fHighByte = Utils.BitmaskToBool(reader.ReadByte(), 0x0001);
+            this.Reader.BaseStream.Seek(oldStreamPosition, System.IO.SeekOrigin.Begin);
+
+            //If a lbl has garbage cce/cch values, ignore reading those values
+            if (this.Length != CalculateLength(fHighByte))
+            {
+                this.RawLblBytes = this.Reader.ReadBytes((int) (this.Length - LblFixedSize));
+                _name = new XLUnicodeStringNoCch();
+                _rgce = new Stack<AbstractPtg>();
+                return;
+            }
+
 
             if (this.cch > 0)
             {
@@ -259,7 +285,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             {
                 _name = new XLUnicodeStringNoCch();
             }
-            long oldStreamPosition = this.Reader.BaseStream.Position;
+            oldStreamPosition = this.Reader.BaseStream.Position;
             try
             {
                 _rgce = ExcelHelperClass.getFormulaStack(this.Reader, this.cce);
@@ -326,13 +352,21 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                 bw.Write(Convert.ToUInt16(this.itab));
                 bw.Write(Convert.ToUInt32(this.fReserved4));
 
-                bw.Write(this.Name.Bytes);
-
-                if (this.rgce != null)
+                if (RawLblBytes != null)
                 {
-                    byte[] ptgBytes = PtgHelper.GetBytes(this.rgce);
-                    bw.Write(ptgBytes);
+                    bw.Write(RawLblBytes);
                 }
+                else
+                {
+                    bw.Write(this.Name.Bytes);
+
+                    if (this.rgce != null)
+                    {
+                        byte[] ptgBytes = PtgHelper.GetBytes(this.rgce);
+                        bw.Write(ptgBytes);
+                    }
+                }
+
                 return bw.GetBytesWritten();
             }
 

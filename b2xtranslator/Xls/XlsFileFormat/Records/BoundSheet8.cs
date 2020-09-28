@@ -127,6 +127,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         /// </summary>
         public SheetType dt;
 
+        public byte[] RawSheetNameBytes = null;
+
         public BoundSheet8(HiddenState hsState, SheetType dt, string sheetName) : base(RecordType.BoundSheet8, 0)
         {
             this.hsState = hsState;
@@ -158,7 +160,26 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
             this.dt = (SheetType)reader.ReadByte();
 
-            this.stName = new ShortXLUnicodeString(reader);
+            var oldStreamPosition = this.Reader.BaseStream.Position;
+            var cch = reader.ReadByte();
+            var fHighByte = Utils.BitmaskToBool(reader.ReadByte(), 0x0001);
+            this.Reader.BaseStream.Seek(oldStreamPosition, System.IO.SeekOrigin.Begin);
+
+            if ((fHighByte && (this.Length - 8 != cch * 2)) ||
+                (!fHighByte && (this.Length - 8 != cch)))
+            {
+                //BoundSheet8 Record is Encrypted - just read the bytes, don't process them
+                //don't grab lbPlyPos, dt, and hsState (6 bytes), but grab everything else
+                this.RawSheetNameBytes = reader.ReadBytes((int) (this.Length - 6));
+                return;
+            }
+            else
+            {
+                this.stName = new ShortXLUnicodeString(reader);
+            }
+
+
+            
 
             if (this.Offset + this.Length != this.Reader.BaseStream.Position)
             {
@@ -188,8 +209,15 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             //dt - 1 byte
             bw.Write(Convert.ToByte(dt));
 
-            //stName - variable
-            bw.Write(stName.Bytes);
+            if (RawSheetNameBytes != null)
+            {
+                bw.Write(RawSheetNameBytes);
+            }
+            else
+            {
+                //stName - variable
+                bw.Write(stName.Bytes);
+            }
 
             return bw.GetBytesWritten();
         }
@@ -200,15 +228,24 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         /// <returns>String from the object</returns>
         public override string ToString()
         {
-            string returnvalue = 
-                string.Format("BoundSheet8 (0x{0} bytes) - flags: 0x{1} | SheetType: {2} | HiddenState: {3} | Name [unicode={4}]: {5}",
-                    this.Length.ToString("X"),
-                    this.Flags.ToString("X"),
-                    this.dt.ToString(),
-                    this.hsState.ToString(),
-                    this.stName.fHighByte,
-                    this.stName.Value);
-            return returnvalue; 
+            if (RawSheetNameBytes == null)
+            {
+                string returnvalue =
+                    string.Format("BoundSheet8 (0x{0} bytes) - flags: 0x{1} | SheetType: {2} | HiddenState: {3} | Name [unicode={4}]: {5}",
+                        this.Length.ToString("X"),
+                        this.Flags.ToString("X"),
+                        this.dt.ToString(),
+                        this.hsState.ToString(),
+                        this.stName.fHighByte,
+                        this.stName.Value);
+                return returnvalue;
+            }
+            else
+            {
+                return string.Format("BoundSheet8 (0x{0} bytes) - Encrypted", this.Length.ToString("X"));
+            }
+
+
         }
     }
 }

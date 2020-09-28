@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>Macrome</AssemblyName>
     <RootNamespace>Macrome</RootNamespace>
-    <Version>0.2.4</Version>
+    <Version>0.3.0</Version>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Description>Build an obfuscated XLS Macro Document or Deobfuscate an existing malicious XLS Macro Document</Description>
     <Copyright>© 2020 Michael Weber</Copyright>

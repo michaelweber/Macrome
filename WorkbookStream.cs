@@ -344,6 +344,16 @@ namespace Macrome
             return obfuscatedStream;
         }
 
+        /// <summary>
+        /// Check for the existence of a FilePass BIFF record indicating RC4 or XOR Obfuscation encryption
+        /// </summary>
+        /// <returns>true if a FilePass record can be found</returns>
+        public bool HasPasswordToOpen()
+        {
+            bool hasPasswordToOpen = GetAllRecordsByType<FilePass>().Count > 0;
+            return hasPasswordToOpen;
+        }
+
 
         public byte[] ToBytes()
         {
