@@ -60,17 +60,39 @@ namespace Macrome
 
             if (wbs.HasPasswordToOpen() && !disableDecryption)
             {
-                Console.WriteLine("FilePass record found - attempting to decrypt with password " + password);
-                XorObfuscation xorObfuscation = new XorObfuscation();
-                try
+                FilePass fpRecord = wbs.GetAllRecordsByType<FilePass>().First();
+
+                if (fpRecord.wEncryptionType == 0 && fpRecord.xorObfuscationKey != 0)
                 {
-                    wbs = xorObfuscation.DecryptWorkbookStream(wbs, password);
+                    XorObfuscation xorObfuscation = new XorObfuscation();
+                    Console.WriteLine("FilePass record found - attempting to decrypt with password " + password);
+                    try
+                    {
+                        wbs = xorObfuscation.DecryptWorkbookStream(wbs, password);
+                    }
+                    catch (ArgumentException argEx)
+                    {
+                        Console.WriteLine("Password " + password + " does not match the verifier value of the document FilePass. Try a different password.");
+                        return;
+                    }
                 }
-                catch (ArgumentException argEx)
+                else if (fpRecord.wEncryptionType == 1 && fpRecord.vMajor > 1)
                 {
-                    Console.WriteLine("Password " + password + " does not match the verifier value of the document FilePass. Try a different password.");
-                    return;
+                    Console.WriteLine("FilePass record for CryptoAPI Found - Currently Unsupported.");
+                    string verifierSalt = BitConverter.ToString(fpRecord.encryptionVerifier.Salt).Replace("-", "");
+                    string verifier = BitConverter.ToString(fpRecord.encryptionVerifier.EncryptedVerifier).Replace("-", "");
+                    string verifierHash = BitConverter.ToString(fpRecord.encryptionVerifier.EncryptedVerifierHash).Replace("-", "");
+                    Console.WriteLine("Salt is: " + verifierSalt);
+                    Console.WriteLine("Vrfy is: " + verifier);
+                    Console.WriteLine("vHsh is: " + verifierHash);
+                    Console.WriteLine("Algo is: " + string.Format("{0:x8}", fpRecord.encryptionHeader.AlgID));
                 }
+
+                else if (fpRecord.wEncryptionType == 1 && fpRecord.vMajor == 1)
+                {
+                    Console.WriteLine("FilePass record for RC4 Binary Document Encryption Found - Currently Unsupported.");
+                }
+
             }
 
             int numBytesToDump = 0;

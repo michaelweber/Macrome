@@ -73,11 +73,17 @@ namespace Macrome
             return result.ToString();
         }
 
-        public static string ToHexDumpString(this BiffRecord record, int maxLength = 0x10, bool showAttrInfo = false)
+        public static string ToHexDumpString(this BiffRecord record, int maxLength = 0x10, bool showAttrInfo = false, bool includeHeader = false)
         {
             string biffString = record.ToString();
-            //Skip the 4 byte header
-            byte[] bytes = record.GetBytes().Skip(4).ToArray();
+            byte[] bytes = record.GetBytes();
+
+            //Skip the 4 byte header if we aren't including the header
+            if (includeHeader == false)
+            {
+                bytes = bytes.Skip(4).ToArray();
+            }
+
             string hexDumpString = HexDump(bytes);
 
             if (record is Formula)

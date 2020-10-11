@@ -126,5 +126,57 @@ namespace UnitTests
             Assert.AreEqual(originalCpRecord.cv, newCpRecord.cv);
         }
 
+        [Test]
+        public void GenerateFilePassBytesForPasswords()
+        {
+            XorObfuscation xorObfuscation = new XorObfuscation();
+
+            byte[] xorArray = xorObfuscation.CreateXorArray_Method1(XorObfuscation.DefaultPassword);
+            string xorString = BitConverter.ToString(xorArray).Replace("-", " ");
+            Console.WriteLine(xorString);
+
+            string[] passwords = new[] { "000", "111", "222", "333", "444", "555", "5 5 5", "666", "777", "7 7 7", "888", "999", "123", "321", "987", "876", "543", "321", "135", "246", "357", "468", "579", "1234", "2020", "2021", "password", "password1", "infected", "infected2" };
+            foreach (var password in passwords)
+            {
+                Console.WriteLine(string.Format("FilePass Bytes for {0}", password));
+                FilePass fp  = xorObfuscation.CreateFilePassFromPassword(password);
+                Console.WriteLine(fp.ToHexDumpString(16, false, true));
+            }
+        }
+
+        [Test]
+        public void GenerateVelvetSweatshopMacroSheetSigs()
+        {
+            XorObfuscation xorObfuscation = new XorObfuscation();
+
+            BoundSheet8 sheetVersion1 = new BoundSheet8(BoundSheet8.HiddenState.Visible, BoundSheet8.SheetType.Macrosheet, "Sheet");
+            BoundSheet8 sheetVersion2 = new BoundSheet8(BoundSheet8.HiddenState.Hidden, BoundSheet8.SheetType.Macrosheet, "Sheet1");
+            BoundSheet8 sheetVersion3 = new BoundSheet8(BoundSheet8.HiddenState.VeryHidden, BoundSheet8.SheetType.Macrosheet, "Sheet2");
+
+            BoundSheet8[] sheets = new[] {sheetVersion1, sheetVersion2, sheetVersion3};
+
+            int hiddenState = 0;
+            foreach (BoundSheet8 currentSheet in sheets)
+            {
+                for (int offset = 0; offset < 16; offset += 1)
+                {
+                    byte[] header = currentSheet.GetBytes().Take(4).ToArray();
+                    byte[] data = currentSheet.GetBytes().Skip(4).ToArray();
+                    byte[] encryptedData = xorObfuscation.EncryptData_Method1(XorObfuscation.DefaultPassword, data, (byte)offset);
+
+                    string ruleName = string.Format("$boundsheet8_hs{0}_vs_xor_offset{1}", hiddenState, offset);
+
+                    string yaraSig = ruleName + " = { ";
+                    yaraSig += BitConverter.ToString(header.Take(2).ToArray()).Replace("-", " ");
+                    yaraSig += " [6] ";
+                    yaraSig += BitConverter.ToString(encryptedData.Skip(4).Take(2).ToArray()).Replace("-", " ");
+                    yaraSig += " }";
+                    Console.WriteLine(yaraSig);
+                }
+
+                hiddenState += 1;
+            }
+        }
+
     }
 }

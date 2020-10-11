@@ -85,6 +85,12 @@ namespace Macrome.Encryption
             0x1021, 0x2042, 0x4084, 0x8108, 0x1231, 0x2462, 0x48C4
         };
 
+        public FilePass CreateFilePassFromPassword(string password)
+        {
+            ushort key = CreateXorKey_Method1(password);
+            ushort verify = CreatePasswordVerifier_Method1(password);
+            return FilePass.CreateXORObfuscationFilePass(key, verify);
+        }
 
         public WorkbookStream DecryptWorkbookStream(WorkbookStream wbs, string password = XorObfuscation.DefaultPassword)
         {
@@ -185,7 +191,7 @@ namespace Macrome.Encryption
                         {
                             ushort key = CreateXorKey_Method1(password);
                             ushort verify = CreatePasswordVerifier_Method1(password);
-                            FilePass filePass = new FilePass(key, verify);
+                            FilePass filePass = FilePass.CreateXORObfuscationFilePass(key, verify);
                             byte[] filePassBytes = filePass.GetBytes();
                             bw.Write(filePassBytes);
                         }
@@ -436,8 +442,7 @@ namespace Macrome.Encryption
                 Value = (byte) (Value ^ XorArray[XorArrayIndex]);
 
                 // SET Value TO (Value rotate right 5 bits)
-                // This is actually a documentation error, should be Rotate Left
-                Value = RotateLeft(Value, 5);
+                Value = RotateRight(Value, 5);
 
                 // SET Data[Index] TO Value
                 DecryptedBytes[Index] = Value;
@@ -470,7 +475,7 @@ namespace Macrome.Encryption
 
 
                 // SET Value TO (Value rotate left 5 bits)
-                Value = RotateRight(Value, 5);
+                Value = RotateLeft(Value, 5);
 
                 // SET Value TO Value BITWISE XOR XorArray[XorArrayIndex]
                 Value = (byte)(Value ^ XorArray[XorArrayIndex]);
@@ -489,12 +494,12 @@ namespace Macrome.Encryption
         }
 
 
-        public byte RotateRight(byte original, byte bits = 1)
+        public byte RotateLeft(byte original, byte bits = 1)
         {
             return (byte) ((original << bits) | (original >> (8 - bits)));
         }
 
-        public byte RotateLeft(byte original, byte bits = 1)
+        public byte RotateRight(byte original, byte bits = 1)
         {
             return (byte)((original >> bits) | (original << (8 - bits)));
         }
