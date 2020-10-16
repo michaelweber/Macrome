@@ -85,7 +85,7 @@ namespace b2xtranslator.xls.XlsFileFormat
                     int index = ptgNameX.ixti - 1;
                     XTI relevantXti = externSheetRecord.rgXTI[index];
 
-                    if (relevantXti.itabFirst >= 0)
+                    if (relevantXti.itabFirst >= 0 && relevantXti.itabFirst < sheetRecords.Count)
                     {
                         BoundSheet8 relevantSheet = sheetRecords[relevantXti.itabFirst];
                         string sheetName = relevantSheet.stName.Value;
