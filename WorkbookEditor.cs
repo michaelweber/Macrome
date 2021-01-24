@@ -281,9 +281,9 @@ namespace Macrome
         ///    The name manager will only display up to the first null byte - and most excel label parsers will also break on this.
         /// </summary>
         /// <returns></returns>
-        public WorkbookStream ObfuscateAutoOpen()
+        public WorkbookStream ObfuscateAutoOpen(string localizedLabel)
         {
-            WbStream = WbStream.ObfuscateAutoOpen();
+            WbStream = WbStream.ObfuscateAutoOpen(localizedLabel);
             return WbStream;
         }
 

