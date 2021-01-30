@@ -429,6 +429,8 @@ namespace b2xtranslator.xls.XlsFileFormat
                         return ptgNameX.ToString();
                     case PtgBool ptgBool:
                         return ptgBool.getData();
+                    case PtgExp ptgExp:
+                        return ptgExp.ToString();
                     default:
                         //Special case for operators
                         if (nextPtg is PtgParen)

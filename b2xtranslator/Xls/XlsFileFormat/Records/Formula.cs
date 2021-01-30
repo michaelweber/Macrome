@@ -191,10 +191,10 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
                     List<PtgMemArea> memAreas = this.ptgStack.Where(ptg => ptg is PtgMemArea).Cast<PtgMemArea>().ToList();
 
                     //Read out the rgce for relevant PtgExtraMem if necessary
-                    foreach (var memArea in memAreas)
-                    {
-                        memArea.ExtraMem = new PtgExtraMem(this.Reader);
-                    }
+                    // foreach (var memArea in memAreas)
+                    // {
+                    //     memArea.ExtraMem = new PtgExtraMem(this.Reader);
+                    // }
 
                 }
                 catch (Exception ex)

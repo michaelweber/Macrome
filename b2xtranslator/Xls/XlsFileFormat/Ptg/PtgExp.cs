@@ -22,5 +22,10 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
             this.rw = this.Reader.ReadUInt16();
             this.col = this.Reader.ReadUInt16(); 
         }
+
+        public override string ToString()
+        {
+            return ExcelHelperClass.ConvertR1C1ToA1(string.Format("R{0}C{1}", rw + 1, (col + 1) & 0xFF));
+        }
     }
 }

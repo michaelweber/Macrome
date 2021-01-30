@@ -12,6 +12,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
     [BiffRecord(RecordType.ExternSheet)] 
     public class ExternSheet : BiffRecord
     {
+        private bool _isBiff5Record = false;
+        
         public const RecordType ID = RecordType.ExternSheet;
 
         public ushort cXTI;
@@ -21,6 +23,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         public ushort[] itabFirst;
 
         public ushort[] itabLast;
+
+        public byte[] biff5Bytes;
 
         public List<XTI> rgXTI;
 
@@ -55,9 +59,17 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
         {
             // assert that the correct record type is instantiated
             Debug.Assert(this.Id == ID);
+
+            if ((length - 2) % 6 != 0)
+            {
+                _isBiff5Record = true;
+                biff5Bytes = reader.ReadBytes(length);
+                return;
+            }
+            
             
             this.cXTI = this.Reader.ReadUInt16();
-
+            
             this.iSUPBOOK = new ushort[this.cXTI];
             this.itabFirst = new ushort[this.cXTI]; 
             this.itabLast = new ushort[this.cXTI];
@@ -86,6 +98,12 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             {
                 bw.Write(GetHeaderBytes());
 
+                if (_isBiff5Record)
+                {
+                    bw.Write(biff5Bytes);
+                    return bw.GetBytesWritten();
+                }
+                
                 bw.Write(Convert.ToUInt16(this.cXTI));
 
                 foreach (var xti in rgXTI)

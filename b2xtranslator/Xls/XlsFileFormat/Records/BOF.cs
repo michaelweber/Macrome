@@ -13,6 +13,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
     [BiffRecord(RecordType.BOF)]
     public class BOF : BiffRecord, IWritableBytestream
     {
+        private bool _isBiff5Record = false;
+        
         public const RecordType ID = RecordType.BOF;
 
         public enum DocumentType : ushort
@@ -196,6 +198,12 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             this.rupBuild = reader.ReadUInt16();
             this.rupYear = reader.ReadUInt16();
 
+            if (length == 8)
+            {
+                _isBiff5Record = true;
+                return;
+            }
+            
             uint flags = reader.ReadUInt32();
             this.fWin = Utils.BitmaskToBool(flags, 0x0001);
             this.fRisc = Utils.BitmaskToBool(flags, 0x0002);
@@ -241,6 +249,11 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
 
                 //rupYear - 2 bytes
                 bw.Write(Convert.ToUInt16(rupYear));
+
+                if (_isBiff5Record)
+                {
+                    return bw.GetBytesWritten();
+                }
 
                 uint flags = 0;
                 flags = flags | Utils.BoolToBitmask(this.fWin, 0x0001);

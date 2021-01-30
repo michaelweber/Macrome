@@ -15,6 +15,8 @@ namespace Macrome
 {
     public class WorkbookStream
     {
+        private bool _isBiff5 = false;
+        
         private List<BiffRecord> _biffRecords;
 
         public List<BiffRecord> Records
@@ -38,7 +40,8 @@ namespace Macrome
                 {
                     var wbStream = ssr.GetStream("Book");
                     Console.WriteLine("WARNING: Main stream is in a Book record indicating legacy Excel 5 BIFF format. This may not parse correctly.");
-
+                    _isBiff5 = true;
+                    
                     byte[] wbBytes = new byte[wbStream.Length];
                     wbStream.Read(wbBytes, 0, wbBytes.Length, 0);
                     try

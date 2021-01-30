@@ -134,9 +134,12 @@ namespace Macrome.Encryption
                 //We remove the FilePass Record for the decrypted document
                 if (mode == ObfuscationMode.Decrypt && bh.id == RecordType.FilePass)
                 {
+                    
                     //Skip the remaining FilePass bytes
-                    ushort encryptionMode = vsr.ReadUInt16();
-
+                    // ushort encryptionMode = vsr.ReadUInt16();
+                    ushort encryptionMode = 0;
+                    
+                    
                     if (encryptionMode != 0)
                     {
                         throw new NotImplementedException("FilePass EncryptionMode of " + encryptionMode +

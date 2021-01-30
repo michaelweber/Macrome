@@ -370,6 +370,11 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
         /// <returns></returns>
         public static string getNameStringfromBuiltInFunctionID(string idstring)
         {
+            if (idstring.Length == 0)
+            {
+                return "UNKNOWN";
+            }
+            
             char firstChar = (char)idstring.ToCharArray().GetValue(0);
 
             switch (firstChar)
@@ -388,7 +393,6 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat
                 case (char)0x0B: return "Auto_Deactivate";
                 case (char)0x0C: return "Sheet_Title";
                 case (char)0x0D: return "_FilterDatabase";
-
 
                 default: return idstring;
 

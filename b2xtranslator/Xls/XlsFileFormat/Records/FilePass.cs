@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.Tools;
@@ -13,7 +14,8 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
     public class FilePass : BiffRecord
     {
         public const RecordType ID = RecordType.FilePass;
-
+        private bool isBiff5 = false;
+        
         public ushort wEncryptionType;
         public byte[] encryptionInfo;
 
@@ -55,7 +57,13 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             // assert that the correct record type is instantiated
             Debug.Assert(this.Id == ID);
 
-            this.wEncryptionType = reader.ReadUInt16();
+            isBiff5 = true;
+            this.wEncryptionType = 0;
+            if (length == 6)
+            {
+                isBiff5 = false;
+                this.wEncryptionType = reader.ReadUInt16();
+            }
 
             //XOR Obfuscation
             if (wEncryptionType == 0)
@@ -110,8 +118,11 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Records
             //Write the header - 4 bytes
             bw.Write(base.GetHeaderBytes());
 
-            bw.Write(this.wEncryptionType);
-
+            if (isBiff5 == false)
+            {
+                bw.Write(this.wEncryptionType);
+            }
+            
             if (wEncryptionType == 0)
             {
                 bw.Write(this.xorObfuscationKey);
