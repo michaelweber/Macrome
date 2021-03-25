@@ -21,6 +21,12 @@ namespace UnitTests
             }
         }
 
+        public static byte[] GetPopCalc64Shellcode()
+        {
+            return Convert.FromBase64String(
+                "SDHJSIHp3f///0iNBe////9Iu6lO4vZjWPLUSDFYJ0gt+P///+L0VQZhEpOwMtSpTqOnIgighf8G0yQGEHmGyQZppHsQeYaJBmmEMxD9Y+MEr8eqEMMUBXKDimF00pVoh++3YpkQOfsPs77oCtJf63Kq97PTclypTuK+5piGs+FPMqboEOqQIg7Cv2KIEYLhsSu36Gx6nKiYr8eqEMMUBQ8jP24Z8xWRrpcHL1u+8KEL2ycWgKqQIg7Gv2KIlJUiQqqy6Bjunaieo31n0LrVeQ+6tzsGq47oFqOvIgK6V0Vuo6ScuKqV8BSqfXGxpStWsb++2Vny1KlO4vZjEH9ZqE/i9iLiw1/GyR0j2Ljv/qMPWFD25W8rfAZhMktk9KijzhkWFl1Jk7o8jZxjAbNdc7E3lQI0kfrMNof2Y1jy1A==");
+        }
+
         public static byte[] GetPopCalcShellcode()
         {
             byte[] buf = new byte[448] {

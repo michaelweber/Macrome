@@ -319,6 +319,16 @@ namespace Macrome
             return formulas;
         }
 
+        public static BiffRecord GetRecordForString(string str, int rw, int col)
+        {
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+            ptgStack.Push(new PtgStr(str, false));
+            Cell targetCell = new Cell(rw, col);
+            BiffRecord record = new Formula(targetCell, FormulaValue.GetEmptyStringFormulaValue(), true,
+                new CellParsedFormula(ptgStack));
+            return record;
+        }
+
         public static List<BiffRecord> ConvertChunkedStringToFormulas(List<string> chunkedString, int rwStart, int colStart, int dstRw,
             int dstCol, int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
