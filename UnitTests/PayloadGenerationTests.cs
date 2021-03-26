@@ -36,6 +36,7 @@ namespace UnitTests
 
             return shellcode;
         }
+
         private List<string> ConvertPayloadToStrings(byte[] shellcode, BaseNEncoder encoder)
         {
             List<string> output = new List<string>();
@@ -76,7 +77,7 @@ namespace UnitTests
             
             BaseNEncoder encoder = new BaseNEncoder();
 
-            var strings = ConvertPayloadToStrings(shellcode, encoder);
+            var strings = FormulaHelper.BuildBase64PayloadMacros(shellcode);
             foreach(var s in strings) {Console.WriteLine(string.Format("=\"{0}\"",s));}
             
             string encodedShellcode = encoder.Encode(shellcode);
@@ -121,7 +122,8 @@ namespace UnitTests
             
             byte[] shellcode = TestHelpers.GetPopCalc64Shellcode();
             shellcode = XorPayloadAgainstString(shellcode, xorKey);
-            var strings = ConvertPayloadToStrings(shellcode, encoder);
+            // var strings = ConvertPayloadToStrings(shellcode, encoder);
+            var strings = FormulaHelper.BuildBase64PayloadMacros(shellcode);
             foreach(var s in strings) {Console.WriteLine(string.Format("=\"{0}\"",s));}
         }
     }

