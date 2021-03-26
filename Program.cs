@@ -16,6 +16,7 @@ using b2xtranslator.StructuredStorage.Reader;
 using b2xtranslator.xls.XlsFileFormat;
 using b2xtranslator.xls.XlsFileFormat.Records;
 using Macrome.Encryption;
+using Index = b2xtranslator.Spreadsheet.XlsFileFormat.Records.Index;
 
 namespace Macrome
 {

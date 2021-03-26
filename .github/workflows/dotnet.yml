@@ -1,0 +1,49 @@
+name: .NET Publish
+
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.101
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Set outputs
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}      
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Publish MacOS Binary
+        run: dotnet publish -c Release -r osx-x64 --self-contained true
+      - name: Publish Windows Binary
+        run: dotnet publish -c Release -r win-x64 --self-contained true
+      - name: Publish Linux Binary
+        run: dotnet publish -c Release -r linux-x64 --self-contained true
+      - name: Bundle Published Builds
+        run: |
+          cd /home/runner/work/Macrome/Macrome/bin/Release/net5.0/win-x64/publish/
+          tar cvzf /home/runner/work/Macrome-Win64-${{ steps.get_version.outputs.VERSION }}.tar.gz *
+          cd /home/runner/work/Macrome/Macrome/bin/Release/net5.0/osx-x64/publish/
+          tar cvzf /home/runner/work/Macrome-MacOS-${{ steps.get_version.outputs.VERSION }}.tar.gz.tar.gz *
+          cd /home/runner/work/Macrome/Macrome/bin/Release/net5.0/linux-x64/publish/        
+          tar cvzf /home/runner/work/Macrome-Linux64-${{ steps.get_version.outputs.VERSION }}.tar.gz.tar.gz *
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            /home/runner/work/Macrome-Win64-${{ steps.get_version.outputs.VERSION }}.tar.gz
+            /home/runner/work/Macrome-MacOS-${{ steps.get_version.outputs.VERSION }}.tar.gz.tar.gz
+            /home/runner/work/Macrome-Linux64-${{ steps.get_version.outputs.VERSION }}.tar.gz.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
