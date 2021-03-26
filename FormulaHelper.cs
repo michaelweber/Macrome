@@ -34,7 +34,7 @@ namespace Macrome
             {
                 if (b == (byte) 0)
                 {
-                    throw new ArgumentException("Payloads cannot contain null bytes");
+                    throw new ArgumentException("Payloads with null bytes must use the Base64 Payload Method.");
                 }
 
                 curMacroString += (char) b;

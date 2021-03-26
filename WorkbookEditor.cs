@@ -138,21 +138,37 @@ namespace Macrome
             int dstColStart, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc,
             PayloadPackingMethod payloadPackingMethod = PayloadPackingMethod.MatchSheetPackingMethod)
         {
-            List<string> payloadMacros = FormulaHelper.BuildPayloadMacros(payload);
+            List<string> payloadMacros;
             List<BiffRecord> formulasToAdd = new List<BiffRecord>();
-            formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payloadMacros, rwStart, colStart, dstRwStart, dstColStart, 15, packingMethod));
-            
-            if (payloadPackingMethod == PayloadPackingMethod.Base64)
+
+            if (payloadPackingMethod == PayloadPackingMethod.MatchSheetPackingMethod)
+            {
+                payloadMacros = FormulaHelper.BuildPayloadMacros(payload);
+                formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payloadMacros, rwStart, colStart,
+                    dstRwStart, dstColStart, 15, packingMethod));
+            }
+            else if (payloadPackingMethod == PayloadPackingMethod.Base64)
             {
                 payloadMacros = FormulaHelper.BuildBase64PayloadMacros(payload);
                 formulasToAdd = FormulaHelper.ConvertBase64StringsToRecords(payloadMacros, rwStart, colStart);
             }
-            
 
             WorkbookStream macroStream = GetMacroStream();
             try
             {
                 BiffRecord lastFormulaInSheet = macroStream.GetAllRecordsByType<Formula>().Last();
+                // If we are using base64 packing, we write STRING entries after our formulas, so check for that first
+                if (payloadPackingMethod == PayloadPackingMethod.Base64)
+                {
+                    try
+                    {
+                        lastFormulaInSheet = macroStream.GetAllRecordsByType<STRING>().Last();
+                    }
+                    catch
+                    {
+                        lastFormulaInSheet = macroStream.GetAllRecordsByType<Formula>().Last();
+                    }
+                }
                 WorkbookStream modifiedStream = WbStream.InsertRecords(formulasToAdd, lastFormulaInSheet);
                 WbStream = modifiedStream;
                 return modifiedStream;
@@ -164,15 +180,30 @@ namespace Macrome
             }
         }
 
-        public WorkbookStream AddFormula(Formula formula)
+        public WorkbookStream AddFormula(Formula formula, PayloadPackingMethod payloadPackingMethod = PayloadPackingMethod.MatchSheetPackingMethod)
         {
-            Formula lastFormula = WbStream.GetAllRecordsByType<Formula>().Last();
+            BiffRecord lastFormula = WbStream.GetAllRecordsByType<Formula>().Last();
+            
+            // If we are using base64 packing, we write STRING entries after our formulas, so check for that first
+            if (payloadPackingMethod == PayloadPackingMethod.Base64)
+            {
+                try
+                {
+                    lastFormula = WbStream.GetAllRecordsByType<STRING>().Last();
+                }
+                catch
+                {
+                    lastFormula = WbStream.GetAllRecordsByType<Formula>().Last();
+                }
+            }
+            
             WbStream = WbStream.InsertRecord(formula, lastFormula);
             WbStream = WbStream.FixBoundSheetOffsets();
             return WbStream;
         }
 
-        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, int dstRwStart = 0, int dstColStart = 0, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
+        public WorkbookStream SetMacroSheetContent(List<string> macroStrings, int rwStart = 0, int colStart = 0, 
+            int dstRwStart = 0, int dstColStart = 0, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
             WorkbookStream macroStream = GetMacroStream();
 
@@ -184,7 +215,7 @@ namespace Macrome
 
             int lastGotoCol = formulasToAdd.Last().AsRecordType<Formula>().col;
             int lastGotoRow = formulasToAdd.Last().AsRecordType<Formula>().rw + 1;
-
+            
             Formula gotoFormula = FormulaHelper.GetGotoFormulaForCell(lastGotoRow, lastGotoCol, dstRwStart, dstColStart);
             WorkbookStream modifiedStream = WbStream.ReplaceRecord(replaceMeFormula, gotoFormula);
             modifiedStream = modifiedStream.InsertRecords(formulasToAdd, gotoFormula);

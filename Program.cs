@@ -330,7 +330,7 @@ namespace Macrome
                  wbe.AddLabel(UnicodeHelper.UnicodeArgumentLabel, null, true, true);
                  //Using lblIndex 2, since that what var has set for us
                  wbe.AddFormula(
-                     FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2));
+                     FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2), payloadMethod);
             }
 
             wbe.AddLabel(localizedLabel, rwStart, colStart);
