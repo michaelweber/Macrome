@@ -18,7 +18,13 @@ namespace Macrome
         ObfuscatedCharFunc,
         ObfuscatedCharFuncAlt,
         CharSubroutine,
-        AntiAnalysisCharSubroutine
+        AntiAnalysisCharSubroutine,
+    }
+
+    public enum PayloadPackingMethod
+    {
+        MatchSheetPackingMethod,
+        Base64
     }
 
     public class WorkbookEditor
@@ -129,11 +135,19 @@ namespace Macrome
         }
 
         public WorkbookStream SetMacroBinaryContent(byte[] payload, int rwStart, int colStart, int dstRwStart,
-            int dstColStart, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
+            int dstColStart, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc,
+            PayloadPackingMethod payloadPackingMethod = PayloadPackingMethod.MatchSheetPackingMethod)
         {
             List<string> payloadMacros = FormulaHelper.BuildPayloadMacros(payload);
             List<BiffRecord> formulasToAdd = new List<BiffRecord>();
             formulasToAdd.AddRange(FormulaHelper.ConvertStringsToRecords(payloadMacros, rwStart, colStart, dstRwStart, dstColStart, 15, packingMethod));
+            
+            if (payloadPackingMethod == PayloadPackingMethod.Base64)
+            {
+                payloadMacros = FormulaHelper.BuildBase64PayloadMacros(payload);
+                formulasToAdd = FormulaHelper.ConvertBase64StringsToRecords(payloadMacros, rwStart, colStart);
+            }
+            
 
             WorkbookStream macroStream = GetMacroStream();
             try

