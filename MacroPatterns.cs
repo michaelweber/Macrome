@@ -264,7 +264,7 @@ namespace Macrome
                 offset = 1;
             } else
             {
-                offset = preamble.Count;
+                offset = preamble.Count + 1;
             }
             //TODO Autocalculate these values at generation time
             //These variables assume certain positions in generated macros
@@ -304,8 +304,7 @@ namespace Macrome
             };
             if (preamble.Count > 0)
             {
-                preamble.AddRange(macros);
-                return preamble;
+                return preamble.Concat(macros).ToList();
             }
             return macros;
         }
@@ -319,7 +318,7 @@ namespace Macrome
             }
             else
             {
-                offset = preamble.Count;
+                offset = preamble.Count + 1;
             }
 
 
@@ -377,6 +376,11 @@ namespace Macrome
                 string.Format("=SET.VALUE({0},0)",x64AllocatedMemoryBase),
                 "=HALT()"
             };
+            
+            if (preamble.Count > 0)
+            {
+                return preamble.Concat(macros).ToList();
+            }
 
             return macros;
         }
@@ -390,7 +394,7 @@ namespace Macrome
             }
             else
             {
-                offset = preamble.Count;
+                offset = preamble.Count + 1;
             }
 
 
@@ -446,6 +450,11 @@ namespace Macrome
                 "=shCreateThread(targetAddress,\"\",0,0)",
                 "=HALT()"
             };
+            
+            if (preamble.Count > 0)
+            {
+                return preamble.Concat(macros).ToList();
+            }
 
             return macros;
         }
