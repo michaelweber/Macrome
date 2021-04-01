@@ -130,6 +130,7 @@ namespace b2xtranslator.Spreadsheet.XlsFileFormat.Ptg
                 case FtabValues.ROUNDBAHTUP:
                 case FtabValues.THAIYEAR:
                     return 1;
+                case FtabValues.ARGUMENT:
                 case FtabValues.SET_VALUE:
                 case FtabValues.ROUND:
                 case FtabValues.ABSREF:

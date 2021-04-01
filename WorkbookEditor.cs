@@ -19,6 +19,7 @@ namespace Macrome
         ObfuscatedCharFuncAlt,
         CharSubroutine,
         AntiAnalysisCharSubroutine,
+        ArgumentSubroutines,
     }
 
     public enum PayloadPackingMethod

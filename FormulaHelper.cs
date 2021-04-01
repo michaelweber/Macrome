@@ -96,6 +96,16 @@ namespace Macrome
             ptgList.Reverse();
             return new Stack<AbstractPtg>(ptgList);
         }
+        
+        private static Stack<AbstractPtg> GetCharSubroutineWithArgsForInt(ushort charInt, int functionLabelOffset)
+        {
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.USERDEFINEDFUNCTION, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgInt(charInt));
+            ptgList.Add(new PtgName(functionLabelOffset));
+            ptgList.Reverse();
+            return new Stack<AbstractPtg>(ptgList);
+        }
 
         private static Stack<AbstractPtg> GetAntiAnalysisCharSubroutineForInt(ushort charInt, string varName, string decoyVarName,
             int functionLabelOffset)
@@ -132,7 +142,7 @@ namespace Macrome
             ptgList.Reverse();
             return new Stack<AbstractPtg>(ptgList);
         }
-
+        
         public static Formula CreateCharInvocationFormulaForLblIndex(ushort rw, ushort col, int lblIndex)
         {
             List<AbstractPtg> ptgList = new List<AbstractPtg>();
@@ -146,18 +156,67 @@ namespace Macrome
             return charInvocationFormula;
         }
 
-        public static Formula CreateFormulaInvocationFormulaForLblIndexes(ushort rw, ushort col, int lblIndex1, int lblIndex2)
+        public static List<Formula> CreateCharFunctionWithArgsForLbl(ushort rw, ushort col, int var1Lblindex, string var1Lblname)
         {
+            // =ARGUMENT("var1",1)
             List<AbstractPtg> ptgList = new List<AbstractPtg>();
-            ptgList.Add(new PtgFuncVar(FtabValues.RETURN, 1, AbstractPtg.PtgDataType.VALUE));
-            ptgList.Add(new PtgFuncVar(CetabValues.FORMULA, 2, AbstractPtg.PtgDataType.VALUE));
-            ptgList.Add(new PtgName(lblIndex1));
-            ptgList.Add(new PtgName(lblIndex2));
+            ptgList.Add(new PtgFuncVar(FtabValues.ARGUMENT, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgInt(1));
+            ptgList.Add(new PtgStr(var1Lblname, true, AbstractPtg.PtgDataType.VALUE));
             ptgList.Reverse();
             Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula charFuncArgFormula = new Formula(new Cell(rw, col), FormulaValue.GetEmptyStringFormulaValue(), true,
+                new CellParsedFormula(ptgStack));
 
-            Formula formulaInvocationFormula = new Formula(new Cell(rw, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
-            return formulaInvocationFormula;
+            // =RETURN(CHAR(var1))
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.RETURN, 1, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgFunc(FtabValues.CHAR, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgName(var1Lblindex));
+            ptgList.Reverse();     
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula charInvocationReturnFormula = new Formula(new Cell(rw+1, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+            return new List<Formula>() {charFuncArgFormula, charInvocationReturnFormula};
+        }
+
+        public static List<Formula> CreateFormulaInvocationFormulaForLblIndexes(ushort rw, ushort col, string var1Lblname, string var2Lblname, int var1Lblindex, int var2Lblindex)
+        {
+            // =ARGUMENT("var1",2)
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.ARGUMENT, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgInt(2));
+            ptgList.Add(new PtgStr(var1Lblname, true, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Reverse();
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula formFuncArg1Formula = new Formula(new Cell(rw, col), FormulaValue.GetEmptyStringFormulaValue(), true,
+                new CellParsedFormula(ptgStack));
+            
+            // =ARGUMENT("var2",8)
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.ARGUMENT, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgInt(8));
+            ptgList.Add(new PtgStr(var2Lblname, true, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Reverse();
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula formFuncArg2Formula = new Formula(new Cell(rw+1, col), FormulaValue.GetEmptyStringFormulaValue(), true,
+                new CellParsedFormula(ptgStack));
+
+            // =FORMULA(var1,var2)
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(CetabValues.FORMULA, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgName(var2Lblindex));
+            ptgList.Add(new PtgName(var1Lblindex));
+            ptgList.Reverse();     
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula formulaInvocationFunction = new Formula(new Cell(rw+2, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+            
+            // =RETURN()
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.RETURN, 0, AbstractPtg.PtgDataType.VALUE));
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula returnFormula = new Formula(new Cell(rw+3, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+
+            return new List<Formula>() {formFuncArg1Formula, formFuncArg2Formula, formulaInvocationFunction, returnFormula};
         }
 
 
@@ -417,21 +476,14 @@ namespace Macrome
             formulaList.Add(concatConcatFormula);
             curRow += 1;
 
-            Stack<AbstractPtg> formulaPtgStack = new Stack<AbstractPtg>();
-
             PtgRef srcCell = new PtgRef(curRow - 1, curCol, false, false, AbstractPtg.PtgDataType.VALUE);
-            formulaPtgStack.Push(srcCell);
-
+            
             Random r = new Random();
             int randomBitStuffing = r.Next(1, 32) * 0x100;
 
             PtgRef destCell = new PtgRef(dstRw, dstCol + randomBitStuffing, false, false);
-            formulaPtgStack.Push(destCell);
 
-            PtgFuncVar funcVar = new PtgFuncVar(CetabValues.FORMULA, 2);
-            formulaPtgStack.Push(funcVar);
-
-            Formula formula = new Formula(new Cell(curRow, curCol, ixfe), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(formulaPtgStack));
+            Formula formula = GetFormulaInvocation(srcCell, destCell, curRow, curCol, packingMethod);
             formulaList.Add(formula);
 
             return formulaList;
@@ -451,6 +503,9 @@ namespace Macrome
                 case SheetPackingMethod.AntiAnalysisCharSubroutine:
                     //For now assume the appropriate label is at offset 1 (first lbl record)
                     return GetAntiAnalysisCharSubroutineForInt(Convert.ToUInt16(c), UnicodeHelper.VarName, UnicodeHelper.DecoyVarName, 1);
+                case SheetPackingMethod.ArgumentSubroutines:
+                    //For now assume the appropriate label is at offset 1 (first lbl record)
+                    return GetCharSubroutineWithArgsForInt(Convert.ToUInt16(c), 1);
                 default:
                     throw new NotImplementedException();
             }
@@ -484,14 +539,42 @@ namespace Macrome
             }
 
             List<BiffRecord> formulaInvocationRecords =
-                BuildFORMULAFunctionCall(createdCells, curRow, curCol, dstRw, dstCol);
+                BuildFORMULAFunctionCall(createdCells, curRow, curCol, dstRw, dstCol, packingMethod);
 
             formulaList.AddRange(formulaInvocationRecords);
 
             return formulaList;
         }
 
-        private static List<BiffRecord> BuildFORMULAFunctionCall(List<Cell> createdCells, int curRow, int curCol, int dstRw, int dstCol)
+        private static Formula GetFormulaInvocation(PtgRef srcCell, PtgRef destCell, int curRow, int curCol, SheetPackingMethod packingMethod)
+        {
+            Stack<AbstractPtg> formulaPtgStack = new Stack<AbstractPtg>();
+
+            if (packingMethod == SheetPackingMethod.ArgumentSubroutines)
+            {
+                // The Formula Call is currently hardcoded to index 2
+                formulaPtgStack.Push(new PtgName(2));
+            }
+            
+            formulaPtgStack.Push(srcCell);
+            formulaPtgStack.Push(destCell);
+
+            if (packingMethod == SheetPackingMethod.ArgumentSubroutines)
+            {
+                PtgFuncVar funcVar = new PtgFuncVar(FtabValues.USERDEFINEDFUNCTION, 3, AbstractPtg.PtgDataType.VALUE);
+                formulaPtgStack.Push(funcVar);                
+            }
+            else
+            {
+                PtgFuncVar funcVar = new PtgFuncVar(CetabValues.FORMULA, 2);
+                formulaPtgStack.Push(funcVar);
+            }
+            
+            Formula formula = new Formula(new Cell(curRow, curCol), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(formulaPtgStack));
+            return formula;
+        }
+
+        private static List<BiffRecord> BuildFORMULAFunctionCall(List<Cell> createdCells, int curRow, int curCol, int dstRw, int dstCol, SheetPackingMethod packingMethod)
         {
             List<BiffRecord> formulaList = new List<BiffRecord>();
 
@@ -499,21 +582,15 @@ namespace Macrome
             formulaList.Add(concatFormula);
             curRow += 1;
 
-            Stack<AbstractPtg> formulaPtgStack = new Stack<AbstractPtg>();
-
+            
             PtgRef srcCell = new PtgRef(curRow - 1, curCol, false, false, AbstractPtg.PtgDataType.VALUE);
-            formulaPtgStack.Push(srcCell);
-
+            
             Random r = new Random();
             int randomBitStuffing = r.Next(1, 32) * 0x100;
 
             PtgRef destCell = new PtgRef(dstRw, dstCol + randomBitStuffing, false, false);
-            formulaPtgStack.Push(destCell);
 
-            PtgFuncVar funcVar = new PtgFuncVar(CetabValues.FORMULA, 2);
-            formulaPtgStack.Push(funcVar);
-
-            Formula formula = new Formula(new Cell(curRow, curCol), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(formulaPtgStack));
+            Formula formula = GetFormulaInvocation(srcCell, destCell, curRow, curCol, packingMethod);
             formulaList.Add(formula);
 
             return formulaList;

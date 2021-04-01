@@ -333,6 +333,42 @@ namespace Macrome
                  wbe.AddFormula(
                      FormulaHelper.CreateCharInvocationFormulaForLblIndex(charInvocationRw, charInvocationCol, 2), payloadMethod);
             }
+            else if (method == SheetPackingMethod.ArgumentSubroutines)
+            {
+                ushort charInvocationRw = 0xefff;
+                ushort charInvocationCol = 0x9f;
+                
+                ushort formInvocationRw = 0xefff;
+                ushort formInvocationCol = 0x9e;
+
+                //Lbl1
+                wbe.AddLabel("CallChar", charInvocationRw, charInvocationCol, false, true);
+                //Lbl2
+                wbe.AddLabel("CallFormula", formInvocationRw, formInvocationCol, false, true);
+                
+                //Lbl3
+                wbe.AddLabel(UnicodeHelper.CharFuncArgument1Label, null, false, true);
+                //Lbl4
+                wbe.AddLabel(UnicodeHelper.FormulaFuncArgument1Label, null, false, true);
+                //Lbl5
+                wbe.AddLabel(UnicodeHelper.FormulaFuncArgument2Label, null, false, true);
+
+                List<Formula> charFunctionFormulas =
+                    FormulaHelper.CreateCharFunctionWithArgsForLbl(charInvocationRw, charInvocationCol, 3,
+                        UnicodeHelper.CharFuncArgument1Label);
+                foreach (var f in charFunctionFormulas)
+                {
+                    wbe.AddFormula(f);
+                }
+
+                List<Formula> formulaFunctionFormulas = FormulaHelper.CreateFormulaInvocationFormulaForLblIndexes(
+                    formInvocationRw, formInvocationCol, UnicodeHelper.FormulaFuncArgument1Label,
+                    UnicodeHelper.FormulaFuncArgument2Label, 4, 5);
+                foreach (var f in formulaFunctionFormulas)
+                {
+                    wbe.AddFormula(f);
+                }
+            }
 
             wbe.AddLabel(localizedLabel, rwStart, colStart);
 

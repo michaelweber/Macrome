@@ -34,5 +34,9 @@ namespace Macrome
         //This makes it very frustrating to compare strings visually
         public const string DecoyVarName = "v\u200b\u200b\u200b\u1e01\u180er";
 
+        public const string CharFuncArgument1Label = "cfv1";
+        public const string FormulaFuncArgument1Label = "ffv1";
+        public const string FormulaFuncArgument2Label = "ffv2";
+
     }
 }
