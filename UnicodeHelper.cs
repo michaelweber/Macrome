@@ -37,6 +37,6 @@ namespace Macrome
         public const string CharFuncArgument1Label = "cfv1";
         public const string FormulaFuncArgument1Label = "ffv1";
         public const string FormulaFuncArgument2Label = "ffv2";
-
+        public const string FormulaEvalArgument1Label = "fev1";
     }
 }

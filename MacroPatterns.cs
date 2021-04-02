@@ -10,6 +10,7 @@ namespace Macrome
     public static class MacroPatterns
     {
         public const string MacroColumnSeparator = ";;;;;";
+        public const string InstaEvalMacroPrefix = "%%%%%";
         public const string DefaultVariableName = "šœƒ";
 
         //Excel variable names must start with a valid letter, then they can include numbers

@@ -259,6 +259,8 @@ namespace Macrome
                      break;
                  case PayloadType.Macro:
                      macros = MacroPatterns.ImportMacroPattern(File.ReadAllLines(payload.FullName).ToList());
+                     //Prepend the preamble to the imported pattern
+                     macros = preambleCode.Concat(macros).ToList();
                      break;
                  default:
                      throw new ArgumentException(string.Format("Invalid PayloadType {0}", payloadType),
@@ -340,6 +342,9 @@ namespace Macrome
                 
                 ushort formInvocationRw = 0xefff;
                 ushort formInvocationCol = 0x9e;
+                
+                ushort evalFormInvocationRw = 0xefff;
+                ushort evalFormInvocationCol = 0x9d;
 
                 //Lbl1
                 wbe.AddLabel("CallChar", charInvocationRw, charInvocationCol, false, true);
@@ -352,6 +357,12 @@ namespace Macrome
                 wbe.AddLabel(UnicodeHelper.FormulaFuncArgument1Label, null, false, true);
                 //Lbl5
                 wbe.AddLabel(UnicodeHelper.FormulaFuncArgument2Label, null, false, true);
+
+                //Lbl6
+                wbe.AddLabel("EvalFormula", evalFormInvocationRw, evalFormInvocationCol, false, true);
+                //Lbl7
+                wbe.AddLabel(UnicodeHelper.FormulaEvalArgument1Label, null, false, true);
+
 
                 List<Formula> charFunctionFormulas =
                     FormulaHelper.CreateCharFunctionWithArgsForLbl(charInvocationRw, charInvocationCol, 3,
@@ -368,6 +379,15 @@ namespace Macrome
                 {
                     wbe.AddFormula(f);
                 }
+
+                List<Formula> formulaEvalFunctionFormulas =
+                    FormulaHelper.CreateFormulaEvalInvocationFormulaForLblIndexes(
+                        evalFormInvocationRw, evalFormInvocationCol, 
+                        UnicodeHelper.FormulaEvalArgument1Label, 7);
+                foreach (var f in formulaEvalFunctionFormulas)
+                {
+                    wbe.AddFormula(f);
+                }                
             }
 
             wbe.AddLabel(localizedLabel, rwStart, colStart);

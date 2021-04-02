@@ -218,6 +218,48 @@ namespace Macrome
 
             return new List<Formula>() {formFuncArg1Formula, formFuncArg2Formula, formulaInvocationFunction, returnFormula};
         }
+        
+        public static List<Formula> CreateFormulaEvalInvocationFormulaForLblIndexes(ushort rw, ushort col, string var1Lblname, int var1Lblindex)
+        {
+            // =ARGUMENT("var1",2)
+            List<AbstractPtg> ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.ARGUMENT, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgInt(2));
+            ptgList.Add(new PtgStr(var1Lblname, true, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Reverse();
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula formFuncArg1Formula = new Formula(new Cell(rw, col), FormulaValue.GetEmptyStringFormulaValue(), true,
+                new CellParsedFormula(ptgStack));
+            
+            // =FORMULA(var1,nextRow)
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(CetabValues.FORMULA, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgRef(rw+2,col,false,false));
+            ptgList.Add(new PtgName(var1Lblindex));
+            ptgList.Reverse();     
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula formulaInvocationFunction = new Formula(new Cell(rw+1, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+
+            // Formula Written by Previous Line
+            
+            // =FORMULA("",prevRow)
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(CetabValues.FORMULA, 2, AbstractPtg.PtgDataType.VALUE));
+            ptgList.Add(new PtgRef(rw+2,col,false,false));
+            ptgList.Add(new PtgStr(""));
+            ptgList.Reverse();     
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula formulaRemovalFunction = new Formula(new Cell(rw+3, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+
+            
+            // =RETURN()
+            ptgList = new List<AbstractPtg>();
+            ptgList.Add(new PtgFuncVar(FtabValues.RETURN, 0, AbstractPtg.PtgDataType.VALUE));
+            ptgStack = new Stack<AbstractPtg>(ptgList);
+            Formula returnFormula = new Formula(new Cell(rw+4, col), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+
+            return new List<Formula>() {formFuncArg1Formula, formulaInvocationFunction, formulaRemovalFunction, returnFormula};
+        }
 
 
         public static Stack<AbstractPtg> GetAlertPtgStack(string alertString)
@@ -436,6 +478,17 @@ namespace Macrome
         public static List<BiffRecord> ConvertChunkedStringToFormulas(List<string> chunkedString, int rwStart, int colStart, int dstRw,
             int dstCol, int ixfe = 15, SheetPackingMethod packingMethod = SheetPackingMethod.ObfuscatedCharFunc)
         {
+            bool instaEval = false;
+            if (chunkedString[0].StartsWith(MacroPatterns.InstaEvalMacroPrefix))
+            {
+                if (packingMethod != SheetPackingMethod.ArgumentSubroutines)
+                {
+                    throw new NotImplementedException("Must use ArgumentSubroutines Sheet Packing for InstaEval");
+                }
+                instaEval = true;
+                chunkedString[0] = chunkedString[0].Replace(MacroPatterns.InstaEvalMacroPrefix, "");
+            }
+            
             List<BiffRecord> formulaList = new List<BiffRecord>();
             
             List<Cell> concatCells = new List<Cell>();
@@ -483,7 +536,7 @@ namespace Macrome
 
             PtgRef destCell = new PtgRef(dstRw, dstCol + randomBitStuffing, false, false);
 
-            Formula formula = GetFormulaInvocation(srcCell, destCell, curRow, curCol, packingMethod);
+            Formula formula = GetFormulaInvocation(srcCell, destCell, curRow, curCol, packingMethod, instaEval);
             formulaList.Add(formula);
 
             return formulaList;
@@ -519,6 +572,17 @@ namespace Macrome
             int curRow = rwStart;
             int curCol = colStart;
 
+            bool instaEval = false;
+            if (str.StartsWith(MacroPatterns.InstaEvalMacroPrefix))
+            {
+                if (packingMethod != SheetPackingMethod.ArgumentSubroutines)
+                {
+                    throw new NotImplementedException("Must use ArgumentSubroutines Sheet Packing for InstaEval");
+                }
+                instaEval = true;
+                str = str.Replace(MacroPatterns.InstaEvalMacroPrefix, "");
+            }
+            
             //TODO [Stealth] Perform additional operations to obfuscate static =CHAR(#) signature
             foreach (char c in str)
             {
@@ -539,21 +603,29 @@ namespace Macrome
             }
 
             List<BiffRecord> formulaInvocationRecords =
-                BuildFORMULAFunctionCall(createdCells, curRow, curCol, dstRw, dstCol, packingMethod);
+                BuildFORMULAFunctionCall(createdCells, curRow, curCol, dstRw, dstCol, packingMethod, instaEval);
 
             formulaList.AddRange(formulaInvocationRecords);
 
             return formulaList;
         }
 
-        private static Formula GetFormulaInvocation(PtgRef srcCell, PtgRef destCell, int curRow, int curCol, SheetPackingMethod packingMethod)
+        private static Formula GetFormulaInvocation(PtgRef srcCell, PtgRef destCell, int curRow, int curCol, SheetPackingMethod packingMethod, bool instaEval)
         {
             Stack<AbstractPtg> formulaPtgStack = new Stack<AbstractPtg>();
 
             if (packingMethod == SheetPackingMethod.ArgumentSubroutines)
             {
-                // The Formula Call is currently hardcoded to index 2
-                formulaPtgStack.Push(new PtgName(2));
+                if (instaEval == false)
+                {
+                    // The Formula Call is currently hardcoded to index 2
+                    formulaPtgStack.Push(new PtgName(2));
+                }
+                else
+                {
+                    // The Instant Evaluation Formula Call is currently hardcoded to index 6
+                    formulaPtgStack.Push(new PtgName(6));
+                }
             }
             
             formulaPtgStack.Push(srcCell);
@@ -574,7 +646,7 @@ namespace Macrome
             return formula;
         }
 
-        private static List<BiffRecord> BuildFORMULAFunctionCall(List<Cell> createdCells, int curRow, int curCol, int dstRw, int dstCol, SheetPackingMethod packingMethod)
+        private static List<BiffRecord> BuildFORMULAFunctionCall(List<Cell> createdCells, int curRow, int curCol, int dstRw, int dstCol, SheetPackingMethod packingMethod, bool instaEval)
         {
             List<BiffRecord> formulaList = new List<BiffRecord>();
 
@@ -590,7 +662,7 @@ namespace Macrome
 
             PtgRef destCell = new PtgRef(dstRw, dstCol + randomBitStuffing, false, false);
 
-            Formula formula = GetFormulaInvocation(srcCell, destCell, curRow, curCol, packingMethod);
+            Formula formula = GetFormulaInvocation(srcCell, destCell, curRow, curCol, packingMethod, instaEval);
             formulaList.Add(formula);
 
             return formulaList;
