@@ -582,32 +582,52 @@ namespace Macrome
                 instaEval = true;
                 str = str.Replace(MacroPatterns.InstaEvalMacroPrefix, "");
             }
+
             
-            //TODO [Stealth] Perform additional operations to obfuscate static =CHAR(#) signature
-            foreach (char c in str)
-            {
-                Stack<AbstractPtg> ptgStack = GetPtgStackForChar(c, packingMethod);
-
-                ushort charValue = Convert.ToUInt16(c);
-                if (charValue > 0xFF)
-                {
-                    ptgStack = new Stack<AbstractPtg>();
-                    ptgStack.Push(new PtgStr("" + c, true));
-                }
-                Cell curCell = new Cell(curRow, curCol, ixfe);
-                createdCells.Add(curCell);
-                Formula charFrm = new Formula(curCell, FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
-                byte[] formulaBytes = charFrm.GetBytes();
-                formulaList.Add(charFrm);
-                curRow += 1;
-            }
-
+            List<Formula> charFormulas = GetCharFormulasForString(str, curRow, curCol, packingMethod);
+            formulaList.AddRange(charFormulas);
+            curRow += charFormulas.Count;
+            createdCells = charFormulas.Select(formula => new Cell(formula.rw, formula.col, ixfe)).ToList();
+            
             List<BiffRecord> formulaInvocationRecords =
                 BuildFORMULAFunctionCall(createdCells, curRow, curCol, dstRw, dstCol, packingMethod, instaEval);
 
             formulaList.AddRange(formulaInvocationRecords);
 
             return formulaList;
+        }
+
+        private static List<Formula> GetCharFormulasForString(string str, int curRow, int curCol,
+            SheetPackingMethod packingMethod)
+        {
+            List<Formula> charFormulas = new List<Formula>();
+
+            if (packingMethod == SheetPackingMethod.ArgumentSubroutines)
+            {
+                Formula macroFormula = ConvertStringToMacroFormula(str, curRow, curCol);
+                charFormulas.Add(macroFormula);
+            }
+            else
+            {
+                foreach (char c in str)
+                {
+                    Stack<AbstractPtg> ptgStack = GetPtgStackForChar(c, packingMethod);
+
+                    ushort charValue = Convert.ToUInt16(c);
+                    if (charValue > 0xFF)
+                    {
+                        ptgStack = new Stack<AbstractPtg>();
+                        ptgStack.Push(new PtgStr("" + c, true));
+                    }
+                    Cell curCell = new Cell(curRow, curCol);
+                    Formula charFrm = new Formula(curCell, FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+                    byte[] formulaBytes = charFrm.GetBytes();
+                    charFormulas.Add(charFrm);
+                    curRow += 1;
+                }
+            }
+
+            return charFormulas;
         }
 
         private static Formula GetFormulaInvocation(PtgRef srcCell, PtgRef destCell, int curRow, int curCol, SheetPackingMethod packingMethod, bool instaEval)
@@ -653,8 +673,7 @@ namespace Macrome
             Formula concatFormula = BuildConcatCellsFormula(createdCells, curRow, curCol);
             formulaList.Add(concatFormula);
             curRow += 1;
-
-            
+        
             PtgRef srcCell = new PtgRef(curRow - 1, curCol, false, false, AbstractPtg.PtgDataType.VALUE);
             
             Random r = new Random();
@@ -668,6 +687,26 @@ namespace Macrome
             return formulaList;
         }
 
+        public static Formula ConvertStringToMacroFormula(string formula, int frmRow, int frmCol)
+        {
+            Stack<AbstractPtg> ptgStack = new Stack<AbstractPtg>();
+            int charactersPushed = 0;
+            foreach (char c in formula)
+            {
+                PtgConcat ptgConcat = new PtgConcat();
+                
+                Stack<AbstractPtg> charStack = GetCharSubroutineWithArgsForInt(Convert.ToUInt16(c), 1);
+                charStack.Reverse().ToList().ForEach(item => ptgStack.Push(item));
+                charactersPushed += 1;
+                if (charactersPushed > 1)
+                {
+                    ptgStack.Push(ptgConcat);
+                }
+            }
+            
+            Formula f = new Formula(new Cell(frmRow, frmCol), FormulaValue.GetEmptyStringFormulaValue(), true, new CellParsedFormula(ptgStack));
+            return f;
+        }
 
         public static Formula BuildConcatCellsFormula(List<Cell> cells, int frmRow, int frmCol, int ixfe = 15)
         {

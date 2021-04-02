@@ -347,9 +347,9 @@ namespace Macrome
                 ushort evalFormInvocationCol = 0x9d;
 
                 //Lbl1
-                wbe.AddLabel("CallChar", charInvocationRw, charInvocationCol, false, true);
+                wbe.AddLabel("c", charInvocationRw, charInvocationCol, false, false);
                 //Lbl2
-                wbe.AddLabel("CallFormula", formInvocationRw, formInvocationCol, false, true);
+                wbe.AddLabel("f", formInvocationRw, formInvocationCol, false, false);
                 
                 //Lbl3
                 wbe.AddLabel(UnicodeHelper.CharFuncArgument1Label, null, false, true);
@@ -359,7 +359,7 @@ namespace Macrome
                 wbe.AddLabel(UnicodeHelper.FormulaFuncArgument2Label, null, false, true);
 
                 //Lbl6
-                wbe.AddLabel("EvalFormula", evalFormInvocationRw, evalFormInvocationCol, false, true);
+                wbe.AddLabel("e", evalFormInvocationRw, evalFormInvocationCol, false, false);
                 //Lbl7
                 wbe.AddLabel(UnicodeHelper.FormulaEvalArgument1Label, null, false, true);
 
@@ -369,7 +369,7 @@ namespace Macrome
                         UnicodeHelper.CharFuncArgument1Label);
                 foreach (var f in charFunctionFormulas)
                 {
-                    wbe.AddFormula(f);
+                    wbe.AddFormula(f, payloadMethod);
                 }
 
                 List<Formula> formulaFunctionFormulas = FormulaHelper.CreateFormulaInvocationFormulaForLblIndexes(
@@ -377,7 +377,7 @@ namespace Macrome
                     UnicodeHelper.FormulaFuncArgument2Label, 4, 5);
                 foreach (var f in formulaFunctionFormulas)
                 {
-                    wbe.AddFormula(f);
+                    wbe.AddFormula(f, payloadMethod);
                 }
 
                 List<Formula> formulaEvalFunctionFormulas =
@@ -386,7 +386,7 @@ namespace Macrome
                         UnicodeHelper.FormulaEvalArgument1Label, 7);
                 foreach (var f in formulaEvalFunctionFormulas)
                 {
-                    wbe.AddFormula(f);
+                    wbe.AddFormula(f, payloadMethod);
                 }                
             }
 

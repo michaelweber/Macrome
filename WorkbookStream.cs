@@ -339,7 +339,11 @@ namespace Macrome
             foreach (char localizedLabelChar in localizedLabel)
             {
                 indexLabel = randomUnicodeChar.Next(localizedLabel.Length);
-                unicodeLabelWithBadChars += badUnicodeChars[indexLabel] + localizedLabelChar;
+                for (var i = 0; i < 10; i += 1)
+                {
+                    unicodeLabelWithBadChars += badUnicodeChars[indexLabel];
+                }
+                unicodeLabelWithBadChars += localizedLabelChar;
             }
             replaceLabelStringLbl.SetName(new XLUnicodeStringNoCch(unicodeLabelWithBadChars, true));
             replaceLabelStringLbl.fBuiltin = false;
