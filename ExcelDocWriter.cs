@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Net;
 using OpenMcdf;
 using OpenMcdf.Extensions;
 using OpenMcdf.Extensions.OLEProperties;
@@ -23,7 +25,6 @@ namespace Macrome
 
             OLEPropertiesContainer dsiContainer = new OLEPropertiesContainer(1252, ContainerType.DocumentSummaryInfo);
             OLEPropertiesContainer siContainer = new OLEPropertiesContainer(1252, ContainerType.SummaryInfo);
-
             //TODO [Stealth] Fill these streams with the expected data information, don't leave them empty
             CFStream dsiStream = cf.RootStorage.AddStream("\u0005DocumentSummaryInformation");
 
@@ -53,6 +54,10 @@ namespace Macrome
             
             cf.Save(filePath);
 
+            // Break the Thardewm.B detection for smaller files =)
+            byte[] excelDocBytes = File.ReadAllBytes(filePath);
+            excelDocBytes[^1] = 0xFF;
+            File.WriteAllBytes(filePath, excelDocBytes);
         }
 
     }
