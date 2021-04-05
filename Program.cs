@@ -216,18 +216,16 @@ namespace Macrome
             string decoyDocPath = decoyDocument.FullName;
 
             WorkbookStream wbs = LoadDecoyDocument(decoyDocPath);
+            List<string> sheetNames = wbs.GetAllRecordsByType<BoundSheet8>().Select(bs => bs.stName.Value).ToList();
+            VBAInfo vbaInfo = VBAInfo.FromCompoundFilePath(decoyDocPath, sheetNames);
+            
             List<string> preambleCode = new List<string>();
             if (preamble != null)
             {
                 string preambleCodePath = new FileInfo(preamble).FullName;
                 preambleCode = new List<string>(File.ReadAllLines(preambleCodePath));
             }
-
-            if (wbs.GetAllRecordsByType<SupBook>().Count > 0)
-            {
-                throw new NotImplementedException("Please use a decoy document with no existing Labels.");
-            }
-
+            
             WorkbookEditor wbe = new WorkbookEditor(wbs);
 
             wbe.AddMacroSheet(defaultMacroSheetRecords, macroSheetName, BoundSheet8.HiddenState.SuperHidden);
@@ -315,10 +313,11 @@ namespace Macrome
                  }
             }
             
-
-            
             wbe.SetMacroSheetContent(macros, curRw,curCol, dstRwStart, dstColStart, method);
 
+            // Initialize the Global Stream records like SupBook + ExternSheet
+            wbe.InitializeGlobalStreamLabels();
+            
             if (method == SheetPackingMethod.CharSubroutine || method == SheetPackingMethod.AntiAnalysisCharSubroutine)
             {
                  ushort charInvocationRw = 0xefff;
@@ -407,7 +406,7 @@ namespace Macrome
             ExcelDocWriter writer = new ExcelDocWriter();
             string outputPath = AssemblyDirectory + Path.DirectorySeparatorChar + outputFileName;
             Console.WriteLine("Writing generated document to {0}", outputPath);
-            writer.WriteDocument(outputPath, createdWorkbook);
+            writer.WriteDocument(outputPath, createdWorkbook, vbaInfo);
         }
 
 
@@ -461,7 +460,8 @@ namespace Macrome
                 Console.WriteLine(e);
             }
         }
-
+        
+        
         private static WorkbookStream LoadDecoyDocument(string decoyDocPath)
         {
             using (var fs = new FileStream(decoyDocPath, FileMode.Open))

@@ -10,14 +10,19 @@ namespace Macrome
 {
     public class ExcelDocWriter
     {
-        public void WriteDocument(string filePath, WorkbookStream wbs)
+        public void WriteDocument(string filePath, WorkbookStream wbs, VBAInfo vbaInfo = null)
         {
-            WriteDocument(filePath, wbs.ToBytes());
+            WriteDocument(filePath, wbs.ToBytes(), vbaInfo);
         }
-
-        public void WriteDocument(string filePath, byte[] wbBytes)
+        
+        public void WriteDocument(string filePath, byte[] wbBytes, VBAInfo vbaInfo = null)
         {
             CompoundFile cf = new CompoundFile();
+            if (vbaInfo != null)
+            {
+                vbaInfo.AddToCompoundFile(cf);
+            }
+            
             //Can be Book or Workbook
             CFStream workbookStream = cf.RootStorage.AddStream("Workbook");
 

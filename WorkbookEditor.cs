@@ -225,7 +225,7 @@ namespace Macrome
             return WbStream;
         }
 
-        private WorkbookStream InitializeGlobalStreamLabels()
+        public WorkbookStream InitializeGlobalStreamLabels()
         {
             List<BoundSheet8> sheets = WbStream.GetAllRecordsByType<BoundSheet8>();
 
@@ -235,12 +235,50 @@ namespace Macrome
             int macroOffset = sheets.TakeWhile(s => s.dt != BoundSheet8.SheetType.Macrosheet).Count();
             ExternSheet externSheetRecord = new ExternSheet(1, new List<XTI>() { new XTI(0, macroOffset, macroOffset) });
 
-            WbStream = WbStream.InsertRecord(supBookRecord, lastCountryRecord);
-            WbStream = WbStream.InsertRecord(externSheetRecord, supBookRecord);
+            if (WbStream.GetAllRecordsByType<SupBook>().Count > 0)
+            {
+                WbStream = WbStream.ReplaceRecord(WbStream.GetAllRecordsByType<SupBook>().First(), supBookRecord);
+            }
+            else
+            {
+                WbStream = WbStream.InsertRecord(supBookRecord, lastCountryRecord);
+            }
 
+            if (WbStream.GetAllRecordsByType<ExternSheet>().Count > 0)
+            {
+                WbStream = WbStream.InsertRecord(externSheetRecord, WbStream.GetAllRecordsByType<ExternSheet>().Last());
+            }
+            else
+            {
+                WbStream = WbStream.InsertRecord(externSheetRecord, supBookRecord);
+            }
+            
             return WbStream;
         }
 
+        public WorkbookStream AddExistingLabel(Lbl existingLbl, ushort iTab = 0)
+        {
+            List<Lbl> existingLbls = WbStream.GetAllRecordsByType<Lbl>();
+            ExternSheet lastExternSheet = WbStream.GetAllRecordsByType<ExternSheet>().LastOrDefault();
+
+            existingLbl.itab = iTab;
+            if (existingLbls.Count > 0)
+            {
+                WbStream = WbStream.InsertRecord(existingLbl, existingLbls.Last());
+            }
+            else
+            {
+                if (lastExternSheet == null)
+                {
+                    throw new NotImplementedException("AddExistingLabel assumes an ExternSheet exists");
+                }
+                WbStream = WbStream.InsertRecord(existingLbl, lastExternSheet);
+            }
+
+            WbStream = WbStream.FixBoundSheetOffsets();
+            return WbStream;
+        }
+        
         public WorkbookStream AddLabel(string label, Stack<AbstractPtg> rgce, bool isHidden = false, bool isUnicode = false, bool isMacroStack = false)
         {
             /*
@@ -248,12 +286,6 @@ namespace Macrome
              * BoundSheet8 record maps to the appropriate tab. In order to make this
              * record we need a SupBook record, and ExternSheet record to specify
              * which BoundSheet8 record to use.
-             *
-             * Currently this assumes there are no SupBook or ExternSheet records in
-             * use, handling of these cases for complex decoy docs is coming
-             * in the future.
-             *
-             * TODO handle existing SupBook/ExternSheet records when adding Lbl entries
              */
 
             List<SupBook> supBooksExisting = WbStream.GetAllRecordsByType<SupBook>();
@@ -272,7 +304,8 @@ namespace Macrome
                 lastExternSheet = WbStream.GetAllRecordsByType<ExternSheet>().Last(); ;
             }
 
-            Lbl newLbl = new Lbl(label, 0);
+            // For now we assume that any labels being added belong to the last BoundSheet8 we added
+            Lbl newLbl = new Lbl(label, (ushort) (WbStream.GetAllRecordsByType<BoundSheet8>().Count));
 
             if (isUnicode)
             {
