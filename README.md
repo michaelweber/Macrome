@@ -93,7 +93,7 @@ These will be detailed in an upcoming blog post, but Macrome can now encode macr
 2. *ObfuscatedCharFunc* - The original Macrome encoding function. Invoke CHAR() but append it to a random empty cell and wrap the value in a `ROUND` function. 
 3. *ObfuscatedCharFuncAlt* - A slight variation on the original encoding, instead of using a PtgFunc to invoke CHAR, we use a PtgFuncVar - this breaks most signatures that try to count CHAR invocations. 
 4. *AntiAnalysisCharSubroutine* - Same as *CharSubroutine* but variables being passed to the subroutine are obfuscated using Unicode shenanigans as described [here](https://malware.pizza/2020/06/18/further-evasion-in-the-forgotten-corners-of-ms-xls/). Note that this will generate a larger document than *CharSubroutine* mode due to the addition of decoy variable names.
-5. *ArgumentSubroutines* - Creates a custom subroutine for CHAR() and FORMULA(), invokes them as custom functions, and parses the arguments using the ARGUMENT() macro which is less supported by emulatorss.
+5. *ArgumentSubroutines* - Creates a custom subroutine for CHAR() and FORMULA(), invokes them as custom functions, and parses the arguments using the ARGUMENT() macro which is less supported by emulators.
 
 Specify an encoding by using the `method` flag when building - for example, to use the *CharSubroutine* encoder:
 
