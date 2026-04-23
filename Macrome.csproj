@@ -33,7 +33,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="OpenMcdf" Version="2.2.1.4" />
+    <PackageReference Include="OpenMcdf" Version="3.1.3" />
     <PackageReference Include="OpenMcdf.Extensions" Version="2.2.1.4" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20253.1" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
